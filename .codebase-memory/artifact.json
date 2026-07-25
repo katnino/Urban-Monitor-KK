@@ -1,11 +1,11 @@
 {
     "schema_version": 1,
-    "commit": "HEAD",
-    "indexed_at": "2026-07-25T09:08:17Z",
+    "commit": "580aa63f994f8e848606e4ce64e387ac0196fd00",
+    "indexed_at": "2026-07-25T09:44:25Z",
     "project": "Users-noniboy-BanjalukaStreetFurniture",
-    "nodes": 29,
-    "edges": 24,
+    "nodes": 40,
+    "edges": 39,
     "original_size": 1769472,
-    "compressed_size": 6496,
+    "compressed_size": 38633,
     "compression_level": 3
 }

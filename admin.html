@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Banjaluka Street Furniture</title>
+  <style>
+    :root { --bg: #0f1117; --card: #1a1d27; --border: #2a2d3a; --text: #e4e6eb; --muted: #8b8fa3; --accent: #7fd3c0; --danger: #e74c3c; --good: #2ecc71; --fair: #f1c40f; --poor: #e74c3c; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .container { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+    h1 { font-size: 20px; margin-bottom: 4px; }
+    .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; margin-top: 12px; }
+    label:first-child { margin-top: 0; }
+    input, select, textarea { width: 100%; padding: 8px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 14px; font-family: inherit; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 60px; }
+    .row { display: flex; gap: 12px; }
+    .row > * { flex: 1; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { opacity: 0.85; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .actions { display: flex; gap: 8px; margin-top: 16px; }
+    .point-list { list-style: none; }
+    .point-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .point-item:last-child { border-bottom: none; }
+    .point-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .point-info { flex: 1; min-width: 0; }
+    .point-id { font-size: 13px; font-weight: 600; }
+    .point-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .point-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .status { padding: 6px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 12px; }
+    .status-ok { background: rgba(46,204,113,0.15); color: var(--good); }
+    .status-err { background: rgba(231,76,60,0.15); color: var(--danger); }
+    .empty { text-align: center; color: var(--muted); padding: 32px; font-size: 13px; }
+    #login-form { max-width: 320px; margin: 80px auto; }
+    #admin-panel { display: none; }
+    .checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+    .checkbox-row input[type="checkbox"] { width: auto; }
+    .checkbox-row label { margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- LOGIN -->
+    <div id="login-form">
+      <div class="card">
+        <h1>Prijava</h1>
+        <p class="subtitle">Unesite admin lozinku za pristup.</p>
+        <label>Lozinka</label>
+        <input type="password" id="password-input" placeholder="••••••••" autofocus>
+        <div class="actions">
+          <button class="btn btn-primary" id="login-btn">Prijavi se</button>
+        </div>
+        <div id="login-status" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div id="admin-panel">
+      <h1>Banjaluka — Admin panel</h1>
+      <p class="subtitle">Dodavanje, izmenu i brisanje klupi i korpi.</p>
+
+      <div id="status-msg" class="status" style="display:none"></div>
+
+      <!-- ADD / EDIT FORM -->
+      <div class="card" id="form-card">
+        <h2 id="form-title" style="font-size:15px;margin-bottom:4px">Dodaj novu stavku</h2>
+        <form id="point-form">
+          <input type="hidden" id="edit-id" value="">
+
+          <div class="row">
+            <div>
+              <label>Tip</label>
+              <select id="f-type">
+                <option value="bench">Klupa</option>
+                <option value="bin">Korpa</option>
+              </select>
+            </div>
+            <div>
+              <label>Stanje</label>
+              <select id="f-condition">
+                <option value="good">Dobro</option>
+                <option value="fair" selected>Zadovoljavajuće</option>
+                <option value="poor">Loše</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Geografska dužina (lng)</label>
+              <input type="number" step="any" id="f-lng" placeholder="17.191" required>
+            </div>
+            <div>
+              <label>Geografska širina (lat)</label>
+              <input type="number" step="any" id="f-lat" placeholder="44.772" required>
+            </div>
+          </div>
+
+          <!-- Bench fields -->
+          <div id="bench-fields">
+            <div class="row">
+              <div>
+                <label>Materijal</label>
+                <select id="f-material">
+                  <option value="wood">Drvo</option>
+                  <option value="metal">Metal</option>
+                  <option value="concrete">Beton</option>
+                  <option value="plastic">Plastika</option>
+                  <option value="">Ostalo</option>
+                </select>
+              </div>
+              <div class="checkbox-row">
+                <input type="checkbox" id="f-backrest" checked>
+                <label for="f-backrest">Ima naslon</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bin fields -->
+          <div id="bin-fields" style="display:none">
+            <div class="row">
+              <div>
+                <label>Tip korpe</label>
+                <select id="f-bintype">
+                  <option value="general">Obična</option>
+                  <option value="recycling">Reciklaža</option>
+                </select>
+              </div>
+              <div class="checkbox-row">
+                <input type="checkbox" id="f-lid">
+                <label for="f-lid">Ima poklopac</label>
+              </div>
+            </div>
+          </div>
+
+          <label>Napomena</label>
+          <textarea id="f-notes" placeholder="Stanje, oštećenja, lokacija..."></textarea>
+
+          <label>Datum pregleda</label>
+          <input type="date" id="f-date">
+
+          <div class="actions">
+            <button type="submit" class="btn btn-primary" id="submit-btn">Sačuvaj</button>
+            <button type="button" class="btn btn-ghost" id="cancel-btn" style="display:none">Otkaži</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- POINT LIST -->
+      <div class="card">
+        <h2 style="font-size:15px;margin-bottom:12px">Evidencija (<span id="point-count">0</span>)</h2>
+        <ul class="point-list" id="point-list">
+          <li class="empty">Učitavanje...</li>
+        </ul>
+      </div>
+
+      <div style="text-align:center;margin-top:16px">
+        <button class="btn btn-ghost" id="logout-btn">Odjavi se</button>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  let token = '';
+  const API = '/api';
+
+  // ── DOM refs ──
+  const loginForm = document.getElementById('login-form');
+  const adminPanel = document.getElementById('admin-panel');
+  const passwordInput = document.getElementById('password-input');
+  const loginBtn = document.getElementById('login-btn');
+  const loginStatus = document.getElementById('login-status');
+  const statusMsg = document.getElementById('status-msg');
+  const pointForm = document.getElementById('point-form');
+  const formTitle = document.getElementById('form-title');
+  const editId = document.getElementById('edit-id');
+  const submitBtn = document.getElementById('submit-btn');
+  const cancelBtn = document.getElementById('cancel-btn');
+  const pointList = document.getElementById('point-list');
+  const pointCount = document.getElementById('point-count');
+  const logoutBtn = document.getElementById('logout-btn');
+  const fType = document.getElementById('f-type');
+  const benchFields = document.getElementById('bench-fields');
+  const binFields = document.getElementById('bin-fields');
+  const fDate = document.getElementById('f-date');
+
+  // Set today's date as default
+  fDate.value = new Date().toISOString().slice(0, 10);
+
+  // Toggle bench/bin fields
+  fType.addEventListener('change', () => {
+    benchFields.style.display = fType.value === 'bench' ? '' : 'none';
+    binFields.style.display = fType.value === 'bin' ? '' : 'none';
+  });
+
+  // ── Auth ──
+  async function login() {
+    const pw = passwordInput.value.trim();
+    if (!pw) return;
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Prijavljujem...';
+
+    try {
+      const res = await fetch(`${API}/admin/points`, {
+        headers: { 'Authorization': `Bearer ${pw}` }
+      });
+      if (res.ok) {
+        token = pw;
+        loginForm.style.display = 'none';
+        adminPanel.style.display = '';
+        loadPoints();
+      } else {
+        showStatus(loginStatus, 'Pogrešna lozinka.', 'err');
+      }
+    } catch {
+      showStatus(loginStatus, 'Greška pri povezivanju.', 'err');
+    }
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Prijavi se';
+  }
+
+  loginBtn.addEventListener('click', login);
+  passwordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+
+  logoutBtn.addEventListener('click', () => {
+    token = '';
+    adminPanel.style.display = 'none';
+    loginForm.style.display = '';
+    passwordInput.value = '';
+    loginStatus.textContent = '';
+  });
+
+  // ── API helpers ──
+  async function api(path, opts = {}) {
+    const res = await fetch(`${API}${path}`, {
+      ...opts,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        ...(opts.headers || {})
+      }
+    });
+    return res.json();
+  }
+
+  function showStatus(el, msg, type) {
+    el.style.display = 'block';
+    el.textContent = msg;
+    el.className = 'status ' + (type === 'err' ? 'status-err' : 'status-ok');
+    if (type !== 'err') setTimeout(() => { el.style.display = 'none'; }, 3000);
+  }
+
+  // ── Load points ──
+  async function loadPoints() {
+    const data = await api('/admin/points');
+    const features = data.features || [];
+    pointCount.textContent = features.length;
+
+    if (!features.length) {
+      pointList.innerHTML = '<li class="empty">Nema evidentiranih stavki.</li>';
+      return;
+    }
+
+    pointList.innerHTML = features.map(f => {
+      const p = f.properties || {};
+      const coords = f.geometry?.coordinates || [0, 0];
+      const color = p.condition === 'good' ? 'var(--good)' : p.condition === 'fair' ? 'var(--fair)' : 'var(--poor)';
+      const typeLabel = p.type === 'bench' ? 'Klupa' : 'Korpa';
+      return `
+        <li class="point-item">
+          <span class="point-dot" style="background:${color}"></span>
+          <div class="point-info">
+            <div class="point-id">${escapeHtml(p.id || '—')}</div>
+            <div class="point-meta">${typeLabel} · ${p.condition || '—'} · ${coords[0].toFixed(4)}, ${coords[1].toFixed(4)} · ${p.date_surveyed || ''}</div>
+          </div>
+          <div class="point-actions">
+            <button class="btn btn-ghost btn-sm" onclick='editPoint(${JSON.stringify(f).replace(/'/g, "&#39;")})'>✎</button>
+            <button class="btn btn-danger btn-sm" onclick="deletePoint('${escapeHtml(p.id)}')">✕</button>
+          </div>
+        </li>`;
+    }).join('');
+  }
+
+  // ── Form submit (add or edit) ──
+  pointForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      type: fType.value,
+      condition: document.getElementById('f-condition').value,
+      lng: document.getElementById('f-lng').value,
+      lat: document.getElementById('f-lat').value,
+      notes: document.getElementById('f-notes').value,
+      date_surveyed: fDate.value
+    };
+
+    if (fType.value === 'bench') {
+      payload.material = document.getElementById('f-material').value;
+      payload.has_backrest = document.getElementById('f-backrest').checked;
+    } else {
+      payload.bin_type = document.getElementById('f-bintype').value;
+      payload.has_lid = document.getElementById('f-lid').checked;
+    }
+
+    submitBtn.disabled = true;
+
+    try {
+      if (editId.value) {
+        payload.id = editId.value;
+        await api('/admin/points', { method: 'PUT', body: JSON.stringify(payload) });
+        showStatus(statusMsg, 'Stavka izmenjena.');
+      } else {
+        await api('/admin/points', { method: 'POST', body: JSON.stringify(payload) });
+        showStatus(statusMsg, 'Stavka dodata.');
+      }
+      resetForm();
+      loadPoints();
+    } catch {
+      showStatus(statusMsg, 'Greška pri čuvanju.', 'err');
+    }
+    submitBtn.disabled = false;
+  });
+
+  // ── Edit ──
+  window.editPoint = function(feature) {
+    const p = feature.properties || {};
+    const c = feature.geometry?.coordinates || [0, 0];
+    editId.value = p.id || '';
+    formTitle.textContent = 'Izmeni stavku';
+    submitBtn.textContent = 'Ažuriraj';
+    cancelBtn.style.display = '';
+    fType.value = p.type || 'bench';
+    fType.dispatchEvent(new Event('change'));
+    document.getElementById('f-condition').value = p.condition || 'fair';
+    document.getElementById('f-lng').value = c[0];
+    document.getElementById('f-lat').value = c[1];
+    document.getElementById('f-material').value = p.material || '';
+    document.getElementById('f-backrest').checked = p.has_backrest ?? true;
+    document.getElementById('f-bintype').value = p.bin_type || 'general';
+    document.getElementById('f-lid').checked = p.has_lid ?? false;
+    document.getElementById('f-notes').value = p.notes || '';
+    fDate.value = p.date_surveyed || new Date().toISOString().slice(0, 10);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  cancelBtn.addEventListener('click', resetForm);
+
+  function resetForm() {
+    editId.value = '';
+    formTitle.textContent = 'Dodaj novu stavku';
+    submitBtn.textContent = 'Sačuvaj';
+    cancelBtn.style.display = 'none';
+    pointForm.reset();
+    fDate.value = new Date().toISOString().slice(0, 10);
+    fType.dispatchEvent(new Event('change'));
+  }
+
+  // ── Delete ──
+  window.deletePoint = async function(id) {
+    if (!confirm(`Obrisati "${id}"?`)) return;
+    await api(`/admin/points?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    showStatus(statusMsg, 'Stavka obrisana.');
+    loadPoints();
+  };
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>

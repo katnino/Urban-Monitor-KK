@@ -50,10 +50,13 @@ Korpe koriste `bin_type` i `has_lid` umesto `material` i `has_backrest`.
 
 ## Kako dodati ili izmeniti stavku
 
-1. Otvorite `points.geojson` u editoru ili alatu kao što je [geojson.io](https://geojson.io)
-2. Dodajte, izmenite ili obrišite feature
-3. Objavite promene (commit + push, ili ručno uploadovanje)
-4. Mapa automatski učitava nove podatke pri sledećem učitavanju stranice
+Admin panel dostupan na `/admin` (potrebna Cloudflare KV + varijabla `ADMIN_PASSWORD`).
+
+1. Prijavite se na `/admin` sa lozinkom
+2. Dodajte, izmenite ili obrišite stavku
+3. Promene su vidljive na mapi odmah
+
+Alternativno: uredite `points.geojson` direktno i objavite promene.
 
 ## Doprinos
 

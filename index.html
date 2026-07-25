@@ -933,7 +933,8 @@
     searchViewbox: [17.08, 44.84, 17.31, 44.72]
   };
 
-  const DATA_URL = '/points.geojson';
+  const API_URL = '/api/points';
+  const STATIC_URL = '/points.geojson';
 
   const landmarks = [
     {
@@ -1397,13 +1398,17 @@
   }
 
   async function loadCollection() {
-    try {
-      const response = await fetch(DATA_URL, { cache: 'no-store' });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return normalizeCollection(await response.json());
-    } catch {
-      return emptyCollection();
+    // Try live API first, fall back to static file
+    for (const url of [API_URL, STATIC_URL]) {
+      try {
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) continue;
+        const data = await response.json();
+        const collection = normalizeCollection(data);
+        if (collection.features.length > 0) return collection;
+      } catch { /* try next */ }
     }
+    return emptyCollection();
   }
 
   function configureAtmosphere() {
