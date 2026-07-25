@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Interaktivna 3D mapa Banje Luke sa klupama, korpama i brzim skokovima do najpoznatijih gradskih tačaka.">
-<title>3D Banja Luka — interaktivna mapa</title>
+<meta name="description" content="Interaktivna mapa urbanih klupi i korpi u Banjoj Luci — praćenje stanja i lokacija inventara.">
+<title>Urban Monitor KK</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%8F%99%EF%B8%8F%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -102,13 +102,28 @@
     width: min(372px, calc(100vw - 32px));
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
     border-radius: var(--radius);
     background: linear-gradient(180deg, rgba(12, 18, 28, 0.9), rgba(8, 12, 18, 0.84));
     border: 1px solid var(--panel-border);
     box-shadow: var(--shadow);
     backdrop-filter: blur(18px) saturate(130%);
     -webkit-backdrop-filter: blur(18px) saturate(130%);
+  }
+
+  .sidebar::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.15);
+    border-radius: 99px;
   }
 
   .sidebar__header {
@@ -715,23 +730,45 @@
       top: 12px;
     }
 
+    @media (max-width: 840px) {
     .control-panel {
-      width: min(310px, calc(100vw - 24px));
       right: 12px;
       top: 12px;
     }
 
     .sidebar {
-      left: 12px;
-      right: 12px;
+      left: 8px;
+      right: 8px;
       top: auto;
-      bottom: 12px;
+      bottom: 8px;
       width: auto;
-      max-height: min(58vh, 620px);
+      max-height: 50vh;
+    }
+
+    .sidebar__header {
+      padding: 16px 14px 12px;
     }
 
     .sidebar__header h1 {
-      font-size: 26px;
+      font-size: 22px;
+    }
+
+    .sidebar__header p {
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .summary-grid {
+      padding: 10px 14px 0;
+      gap: 6px;
+    }
+
+    .summary-value {
+      font-size: 20px;
+    }
+
+    .sidebar__section {
+      padding: 10px 14px;
     }
   }
 
@@ -742,48 +779,47 @@
     }
 
     .title-badge {
-      right: 12px;
-      width: calc(100vw - 24px);
-      justify-content: center;
+      top: 10px;
+      left: 10px;
+      right: auto;
+      width: auto;
+      padding: 8px 12px;
     }
 
-    .control-panel {
-      width: calc(100vw - 24px);
-      right: 12px;
-      top: 66px;
+    .sidebar {
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      border-radius: var(--radius) var(--radius) 0 0;
+      max-height: 45vh;
     }
 
     .summary-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(3, 1fr);
     }
 
     .search-box {
       grid-template-columns: 1fr;
-    }
-
-    .sidebar {
-      max-height: min(56vh, 560px);
-      top: auto;
-      bottom: 12px;
     }
   }
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="map" aria-label="3D mapa Banje Luke"></div>
+  <div id="map" aria-label="Mapa Banje Luke"></div>
 
   <div class="title-badge" aria-label="Naslov aplikacije">
     <span class="title-badge__icon">🏙️</span>
-    <span class="title-badge__text">3D <em>Banja Luka</em></span>
+    <span class="title-badge__text"><em>Urban</em> Monitor KK</span>
   </div>
 
   <aside class="sidebar" aria-label="Pregled i filteri">
     <div class="sidebar__header">
-      <h1>Banjaluka, klupe i korpe</h1>
+      <h1>Urban Monitor KK</h1>
       <p>
-        Pregledajte urbani inventar u 3D sloju grada, skočite do ključnih
-        lokacija i pratite šta je već mapirano u centru Banje Luke.
+        Inventar uličnog nameštaja — klupe i korpe za otpatke
+        u centru Banje Luke.
       </p>
       <div class="status-row">
         <span class="status-pill">OpenFreeMap + MapLibre</span>
@@ -865,8 +901,8 @@
     </div>
 
     <div class="sidebar__footer">
-      Podaci se čitaju iz <code>points.geojson</code>.
-      Za dodavanje ili izmenu stavki, uredite taj fajl i objavite promene.
+      Podaci se čuvaju u Cloudflare KV bazi.
+      Za dodavanje ili izmenu stavki koristite <a href="/admin" style="color:var(--accent);text-decoration:none">admin panel</a>.
     </div>
   </aside>
 
