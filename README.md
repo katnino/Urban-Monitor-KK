@@ -6,9 +6,6 @@ prikazom važnih gradskih tačaka.
 Cilj je jednostavan: da građani vide koja urbana oprema postoji i u kakvom je
 zaista stanju.
 
-**Mapa:** otvorite `index.html` lokalno ili objavite projekat na statičkom hostingu
-(Cloudflare Pages, GitHub Pages, i sl.).
-
 ## Šta je mapirano
 
 - 🪑 Klupe - materijal, naslon, stanje
@@ -43,7 +40,7 @@ Korpe koriste `bin_type` i `has_lid` umesto `material` i `has_backrest`.
 
 ## Tehnologija
 
-- Običan HTML + [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/) - bez build koraka
+- HTML + [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/) - bez build koraka
 - 3D prikaz koristi OpenFreeMap stil i 3D ekstrudirane zgrade
 - Podaci su u `points.geojson` (standardna GeoJSON FeatureCollection)
 
