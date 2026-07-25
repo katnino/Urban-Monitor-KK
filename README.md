@@ -1,8 +1,7 @@
-# 3D Banja Luka
+# URBAN MONITOR Klupe i korpe
 
 Otvorena, građanska 3D mapa Banje Luke sa klupama, korpama za otpatke i
-brzim skokovima do važnih gradskih tačaka. Cilj je da se javni prostor vidi
-jasno, bez šminke, u sloju koji je lak za pregled i dopunu.
+prikazom važnih gradskih tačaka.
 
 Cilj je jednostavan: da građani vide koja urbana oprema postoji i u kakvom je
 zaista stanju.
