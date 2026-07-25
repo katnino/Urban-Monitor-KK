@@ -1,6 +1,6 @@
 # URBAN MONITOR Klupe i korpe
 
-Otvorena, građanska 3D mapa Banje Luke sa klupama, korpama za otpatke i
+3D mapa Banje Luke sa klupama, korpama za otpatke i
 prikazom važnih gradskih tačaka.
 
 Cilj je jednostavan: da građani vide koja urbana oprema postoji i u kakvom je
@@ -46,21 +46,6 @@ Korpe koriste `bin_type` i `has_lid` umesto `material` i `has_backrest`.
 - Običan HTML + [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/) - bez build koraka
 - 3D prikaz koristi OpenFreeMap stil i 3D ekstrudirane zgrade
 - Podaci su u `points.geojson` (standardna GeoJSON FeatureCollection)
-
-## Kako dodati ili izmeniti stavku
-
-Admin panel dostupan na `/admin` (potrebna Cloudflare KV + varijabla `ADMIN_PASSWORD`).
-
-1. Prijavite se na `/admin` sa lozinkom
-2. Dodajte, izmenite ili obrišite stavku
-3. Promene su vidljive na mapi odmah
-
-Alternativno: uredite `points.geojson` direktno i objavite promene.
-
-## Doprinos
-
-Vidite klupu ili korpu koja nedostaje, pomerena je ili joj se stanje promenilo?
-Otvorite issue ili pošaljite izmene direktno u `points.geojson`.
 
 ## Plan
 
