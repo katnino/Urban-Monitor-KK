@@ -93,6 +93,60 @@
     color: var(--accent);
   }
 
+  .sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-left: 4px;
+    flex-shrink: 0;
+  }
+
+  .sidebar-toggle:hover {
+    background: rgba(255,255,255,0.18);
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(calc(-100% - 20px));
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sidebar {
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.25s;
+  }
+
+  .sidebar-show {
+    position: absolute;
+    top: 76px;
+    left: 12px;
+    z-index: 26;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    background: var(--panel-strong);
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--shadow);
+    transition: opacity 0.2s, background 0.2s;
+  }
+
+  .sidebar-show:hover {
+    background: rgba(255,255,255,0.14);
+  }
+
   .sidebar {
     position: absolute;
     top: 70px;
@@ -745,6 +799,17 @@
       max-height: 50vh;
     }
 
+    .sidebar.collapsed {
+      transform: translateY(calc(100% + 20px));
+    }
+
+    .sidebar-show {
+      top: auto;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
     .sidebar__header {
       padding: 16px 14px 12px;
     }
@@ -812,7 +877,12 @@
   <div class="title-badge" aria-label="Naslov aplikacije">
     <span class="title-badge__icon">🏙️</span>
     <span class="title-badge__text"><em>Urban</em> Monitor KK</span>
+    <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Sakrij panel" title="Sakrij/prikaži panel">
+      <span class="sidebar-toggle__icon">◀</span>
+    </button>
   </div>
+
+  <button id="sidebar-show" class="sidebar-show" aria-label="Prikaži panel" title="Prikaži panel" style="display:none">▶</button>
 
   <aside class="sidebar" aria-label="Pregled i filteri">
     <div class="sidebar__header">
@@ -1758,6 +1828,26 @@
 
     modeBadgeCloseEl.addEventListener('click', () => {
       modeBadgeEl.remove();
+    });
+
+    /* Sidebar toggle */
+    const sidebarEl = document.querySelector('.sidebar');
+    const sidebarToggleEl = document.getElementById('sidebar-toggle');
+    const sidebarShowEl = document.getElementById('sidebar-show');
+    const toggleIcon = sidebarToggleEl.querySelector('.sidebar-toggle__icon');
+
+    sidebarToggleEl.addEventListener('click', () => {
+      sidebarEl.classList.add('collapsed');
+      toggleIcon.textContent = '▶';
+      sidebarToggleEl.setAttribute('aria-label', 'Prikaži panel');
+      sidebarShowEl.style.display = '';
+    });
+
+    sidebarShowEl.addEventListener('click', () => {
+      sidebarEl.classList.remove('collapsed');
+      toggleIcon.textContent = '◀';
+      sidebarToggleEl.setAttribute('aria-label', 'Sakrij panel');
+      sidebarShowEl.style.display = 'none';
     });
   }
 
