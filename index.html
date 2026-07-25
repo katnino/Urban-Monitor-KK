@@ -1165,11 +1165,13 @@
   }
 
   function syncInventorySource() {
+    console.log('syncInventorySource called, map loaded:', map?.isStyleLoaded());
     if (!map || !map.isStyleLoaded()) {
       return;
     }
 
     const source = map.getSource('inventory-points');
+    console.log('Source exists:', !!source);
 
     if (source) {
       source.setData(currentCollection);
@@ -1181,6 +1183,7 @@
       type: 'geojson',
       data: currentCollection
     });
+    console.log('Added source with', currentCollection.features.length, 'features');
 
     map.addLayer({
       id: INVENTORY_HALO_LAYER_ID,
@@ -1701,6 +1704,7 @@
   async function bootstrap() {
     setSyncStatus('Učitavam podatke...');
     currentCollection = await loadCollection();
+    console.log('Loaded collection:', currentCollection.features.length, 'features');
     syncInventorySource();
     updateCounters();
     applyInventoryFilter();
