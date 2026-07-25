@@ -1164,106 +1164,112 @@
     updateCounters();
   }
 
+  let _syncRetryTimer = null;
+
   function syncInventorySource() {
-    console.log('syncInventorySource called, map loaded:', map?.isStyleLoaded());
-    if (!map || !map.isStyleLoaded()) {
-      return;
-    }
+    if (!map) return;
 
     const source = map.getSource('inventory-points');
-    console.log('Source exists:', !!source);
 
+    /* If source already exists, just update data */
     if (source) {
       source.setData(currentCollection);
       inventorySourceReady = true;
+      applyInventoryFilter();
       return;
     }
 
-    map.addSource('inventory-points', {
-      type: 'geojson',
-      data: currentCollection
-    });
-    console.log('Added source with', currentCollection.features.length, 'features');
-
-    map.addLayer({
-      id: INVENTORY_HALO_LAYER_ID,
-      type: 'circle',
-      source: 'inventory-points',
-      paint: {
-        'circle-radius': [
-          'interpolate',
-          ['linear'],
-          ['zoom'],
-          14,
-          11,
-          17,
-          16
-        ],
-        'circle-color': [
-          'match',
-          ['get', 'condition'],
-          'good',
-          '#2ecc71',
-          'fair',
-          '#f1c40f',
-          'poor',
-          '#e74c3c',
-          '#7fd3c0'
-        ],
-        'circle-opacity': 0.18,
-        'circle-blur': 0.1
+    /* Source doesn't exist yet — wait for style to be fully ready */
+    if (!map.isStyleLoaded()) {
+      if (!_syncRetryTimer) {
+        _syncRetryTimer = setTimeout(() => { _syncRetryTimer = null; syncInventorySource(); }, 500);
       }
-    });
+      return;
+    }
 
-    map.addLayer({
-      id: INVENTORY_LAYER_ID,
-      type: 'circle',
-      source: 'inventory-points',
-      paint: {
-        'circle-radius': [
-          'interpolate',
-          ['linear'],
-          ['zoom'],
-          14,
-          5.5,
-          17,
-          9.5
-        ],
-        'circle-color': [
-          'match',
-          ['get', 'condition'],
-          'good',
-          '#2ecc71',
-          'fair',
-          '#f1c40f',
-          'poor',
-          '#e74c3c',
-          '#7fd3c0'
-        ],
-        'circle-stroke-color': '#f7f8fb',
-        'circle-stroke-width': 1.6,
-        'circle-opacity': 0.94
+    try {
+      map.addSource('inventory-points', {
+        type: 'geojson',
+        data: currentCollection
+      });
+
+      map.addLayer({
+        id: INVENTORY_HALO_LAYER_ID,
+        type: 'circle',
+        source: 'inventory-points',
+        paint: {
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            10, 14,
+            14, 18,
+            17, 24,
+            20, 30
+          ],
+          'circle-color': [
+            'match',
+            ['get', 'condition'],
+            'good', '#2ecc71',
+            'fair', '#f1c40f',
+            'poor', '#e74c3c',
+            '#7fd3c0'
+          ],
+          'circle-opacity': 0.22,
+          'circle-blur': 0.5
+        }
+      });
+
+      map.addLayer({
+        id: INVENTORY_LAYER_ID,
+        type: 'circle',
+        source: 'inventory-points',
+        paint: {
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            10, 8,
+            14, 11,
+            17, 15,
+            20, 20
+          ],
+          'circle-color': [
+            'match',
+            ['get', 'condition'],
+            'good', '#2ecc71',
+            'fair', '#f1c40f',
+            'poor', '#e74c3c',
+            '#7fd3c0'
+          ],
+          'circle-stroke-color': '#ffffff',
+          'circle-stroke-width': 2,
+          'circle-opacity': 1
+        }
+      });
+
+      map.on('click', INVENTORY_LAYER_ID, (event) => {
+        const feature = event.features && event.features[0];
+        if (!feature) return;
+        openFeaturePopup(feature, event.lngLat);
+      });
+
+      map.on('mouseenter', INVENTORY_LAYER_ID, () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+
+      map.on('mouseleave', INVENTORY_LAYER_ID, () => {
+        map.getCanvas().style.cursor = '';
+      });
+
+      inventorySourceReady = true;
+      applyInventoryFilter();
+    } catch (err) {
+      console.warn('syncInventorySource failed, retrying:', err);
+      if (!_syncRetryTimer) {
+        _syncRetryTimer = setTimeout(() => { _syncRetryTimer = null; syncInventorySource(); }, 1000);
       }
-    });
-
-    map.on('click', INVENTORY_LAYER_ID, (event) => {
-      const feature = event.features && event.features[0];
-      if (!feature) {
-        return;
-      }
-      openFeaturePopup(feature, event.lngLat);
-    });
-
-    map.on('mouseenter', INVENTORY_LAYER_ID, () => {
-      map.getCanvas().style.cursor = 'pointer';
-    });
-
-    map.on('mouseleave', INVENTORY_LAYER_ID, () => {
-      map.getCanvas().style.cursor = '';
-    });
-
-    inventorySourceReady = true;
-    applyInventoryFilter();
+    }
   }
 
   function openFeaturePopup(feature, lngLat) {
@@ -1704,7 +1710,6 @@
   async function bootstrap() {
     setSyncStatus('Učitavam podatke...');
     currentCollection = await loadCollection();
-    console.log('Loaded collection:', currentCollection.features.length, 'features');
     syncInventorySource();
     updateCounters();
     applyInventoryFilter();
@@ -1731,8 +1736,7 @@
       pitch: CITY.pitch3d,
       bearing: CITY.bearing,
       maxPitch: 85,
-      antialias: true,
-      canvasContextAttributes: { antialias: true }
+      antialias: true
     });
   } catch (error) {
     console.error(error);
@@ -1757,6 +1761,12 @@
         set3DMode(true, { animate: false });
         attachEventHandlers();
         await bootstrap();
+        /* Safety net: if inventory source still wasn't added, try again on idle */
+        map.on('idle', () => {
+          if (currentCollection.features.length > 0 && !map.getSource('inventory-points')) {
+            syncInventorySource();
+          }
+        });
       } catch (error) {
         console.error(error);
         showStartupOverlay('Mapa je naišla na grešku pri učitavanju. Provjerite mrežu ili ponovo otvorite stranicu.');
