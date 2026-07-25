@@ -1125,6 +1125,19 @@
 
   const _BENCH_SVG = `
     <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+      <defs>
+        <filter id="bench-shadow" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="1.6"/>
+        </filter>
+      </defs>
+      <g transform="translate(0,2)" filter="url(#bench-shadow)" opacity="0.45" fill="#000000">
+        <rect x="9"  y="11" width="6"  height="29" rx="3"/>
+        <rect x="10" y="13" width="42" height="5" rx="2.5"/>
+        <rect x="10" y="23" width="42" height="5" rx="2.5"/>
+        <rect x="6"  y="35" width="52" height="7" rx="3"/>
+        <rect x="12" y="42" width="6"  height="15" rx="2"/>
+        <rect x="46" y="42" width="6"  height="15" rx="2"/>
+      </g>
       <g fill="__COLOR__">
         <rect x="9"  y="11" width="6"  height="29" rx="3"/>
         <rect x="10" y="13" width="42" height="5" rx="2.5"/>
@@ -1137,6 +1150,16 @@
 
   const _BIN_SVG = `
     <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+      <defs>
+        <filter id="bin-shadow" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="1.6"/>
+        </filter>
+      </defs>
+      <g transform="translate(0,2)" filter="url(#bin-shadow)" opacity="0.45" fill="#000000">
+        <rect x="27" y="7"  width="10" height="6" rx="2"/>
+        <rect x="14" y="14" width="36" height="7" rx="3"/>
+        <path d="M18,23 L46,23 L42.5,55 Q42.2,59 38,59 L26,59 Q21.8,59 21.5,55 Z"/>
+      </g>
       <g fill="__COLOR__">
         <rect x="27" y="7"  width="10" height="6" rx="2"/>
         <rect x="14" y="14" width="36" height="7" rx="3"/>
