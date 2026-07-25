@@ -1,0 +1,5 @@
+.DS_Store
+.codebase-memory/
+.wrangler/
+wrangler.jsonc
+node_modules/
