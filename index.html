@@ -1011,7 +1011,60 @@
 
   const BUILDING_LAYER_ID = 'banja-luka-3d-buildings';
   const INVENTORY_LAYER_ID = 'banja-luka-inventory';
-  const INVENTORY_HALO_LAYER_ID = 'banja-luka-inventory-halo';
+
+  /* ── SDF icon helpers ── */
+  function _createSDF(drawFn, size) {
+    const c = document.createElement('canvas');
+    c.width = size; c.height = size;
+    const ctx = c.getContext('2d');
+    drawFn(ctx, size);
+    return c;
+  }
+
+  function _drawBench(ctx, s) {
+    ctx.clearRect(0, 0, s, s);
+    ctx.fillStyle = 'white';
+    /* backrest */
+    ctx.fillRect(s * 0.12, s * 0.18, s * 0.76, s * 0.07);
+    ctx.fillRect(s * 0.15, s * 0.25, s * 0.06, s * 0.22);
+    ctx.fillRect(s * 0.79, s * 0.25, s * 0.06, s * 0.22);
+    /* seat */
+    ctx.fillRect(s * 0.08, s * 0.47, s * 0.84, s * 0.08);
+    /* legs */
+    ctx.fillRect(s * 0.14, s * 0.55, s * 0.07, s * 0.30);
+    ctx.fillRect(s * 0.79, s * 0.55, s * 0.07, s * 0.30);
+    /* ground bar */
+    ctx.fillRect(s * 0.10, s * 0.83, s * 0.80, s * 0.04);
+  }
+
+  function _drawBin(ctx, s) {
+    ctx.clearRect(0, 0, s, s);
+    ctx.fillStyle = 'white';
+    /* body */
+    ctx.beginPath();
+    ctx.moveTo(s * 0.22, s * 0.36);
+    ctx.lineTo(s * 0.78, s * 0.36);
+    ctx.lineTo(s * 0.72, s * 0.84);
+    ctx.lineTo(s * 0.28, s * 0.84);
+    ctx.closePath();
+    ctx.fill();
+    /* lid */
+    ctx.fillRect(s * 0.16, s * 0.26, s * 0.68, s * 0.10);
+    /* handle */
+    ctx.fillRect(s * 0.38, s * 0.16, s * 0.24, s * 0.10);
+    /* recycling arrow hint */
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.font = `bold ${s * 0.22}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('♻', s * 0.50, s * 0.62);
+  }
+
+  function registerInventoryIcons() {
+    if (map.hasImage('bench-icon')) return;
+    map.addImage('bench-icon', _createSDF(_drawBench, 64), { sdf: true });
+    map.addImage('bin-icon', _createSDF(_drawBin, 64), { sdf: true });
+  }
 
   const mappedCountEl = document.getElementById('mapped-count');
   const visibleCountEl = document.getElementById('visible-count');
@@ -1156,11 +1209,6 @@
     }
 
     map.setFilter(INVENTORY_LAYER_ID, buildLayerFilter());
-
-    if (map.getLayer(INVENTORY_HALO_LAYER_ID)) {
-      map.setFilter(INVENTORY_HALO_LAYER_ID, buildLayerFilter());
-    }
-
     updateCounters();
   }
 
@@ -1193,48 +1241,32 @@
         data: currentCollection
       });
 
-      map.addLayer({
-        id: INVENTORY_HALO_LAYER_ID,
-        type: 'circle',
-        source: 'inventory-points',
-        paint: {
-          'circle-radius': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            10, 14,
-            14, 18,
-            17, 24,
-            20, 30
-          ],
-          'circle-color': [
-            'match',
-            ['get', 'condition'],
-            'good', '#2ecc71',
-            'fair', '#f1c40f',
-            'poor', '#e74c3c',
-            '#7fd3c0'
-          ],
-          'circle-opacity': 0.22,
-          'circle-blur': 0.5
-        }
-      });
+      registerInventoryIcons();
 
       map.addLayer({
         id: INVENTORY_LAYER_ID,
-        type: 'circle',
+        type: 'symbol',
         source: 'inventory-points',
-        paint: {
-          'circle-radius': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            10, 8,
-            14, 11,
-            17, 15,
-            20, 20
+        layout: {
+          'icon-image': [
+            'match', ['get', 'type'],
+            'bench', 'bench-icon',
+            'bin', 'bin-icon',
+            'bench-icon'
           ],
-          'circle-color': [
+          'icon-size': [
+            'interpolate', ['linear'], ['zoom'],
+            10, 0.55,
+            14, 0.7,
+            17, 0.9,
+            20, 1.1
+          ],
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
+          'icon-anchor': 'center'
+        },
+        paint: {
+          'icon-color': [
             'match',
             ['get', 'condition'],
             'good', '#2ecc71',
@@ -1242,9 +1274,8 @@
             'poor', '#e74c3c',
             '#7fd3c0'
           ],
-          'circle-stroke-color': '#ffffff',
-          'circle-stroke-width': 2,
-          'circle-opacity': 1
+          'icon-halo-color': 'rgba(255,255,255,0.8)',
+          'icon-halo-width': 1.5
         }
       });
 
