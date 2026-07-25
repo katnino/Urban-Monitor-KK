@@ -17,7 +17,10 @@ vizuelnog pregleda.
 
 ## Format podataka
 
-Podaci se nalaze u `points.geojson`, standardnoj GeoJSON FeatureCollection.
+Primarni podaci se čuvaju u Cloudflare KV bazi pod ključem `banjaluka:points`
+i izlažu kroz `/api/points`. Ako KV nije dostupan, aplikacija pada nazad na
+lokalni `points.geojson`.
+
 Jedna tačka izgleda ovako:
 
 ```json
@@ -42,7 +45,23 @@ Korpe koriste `bin_type` i `has_lid` umesto `material` i `has_backrest`.
 
 - HTML + [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/) - bez build koraka
 - 3D prikaz koristi OpenFreeMap stil i 3D ekstrudirane zgrade
-- Podaci su u `points.geojson` (standardna GeoJSON FeatureCollection)
+- Podaci se čitaju iz `/api/points`, a lokalni `points.geojson` služi kao fallback
+
+## Kako dodati ili izmeniti stavku
+
+Admin panel dostupan na `/admin` (potrebna Cloudflare KV + varijabla `ADMIN_PASSWORD`).
+
+1. Prijavite se na `/admin` sa lozinkom
+2. Dodajte, izmenite ili obrišite stavku
+3. Promene su vidljive na mapi odmah
+
+Alternativno: uredite `points.geojson` direktno ako želite da promenite
+početni fallback sadržaj.
+
+## Doprinos
+
+Vidite klupu ili korpu koja nedostaje, pomerena je ili joj se stanje promenilo?
+Otvorite issue ili dodajte izmene kroz admin panel.
 
 ## Plan
 

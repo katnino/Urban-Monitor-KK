@@ -193,6 +193,7 @@
   const benchFields = document.getElementById('bench-fields');
   const binFields = document.getElementById('bin-fields');
   const fDate = document.getElementById('f-date');
+  let renderedFeaturesById = new Map();
 
   // Set today's date as default
   fDate.value = new Date().toISOString().slice(0, 10);
@@ -218,7 +219,7 @@
         token = pw;
         loginForm.style.display = 'none';
         adminPanel.style.display = '';
-        loadPoints();
+        await loadPoints();
       } else {
         showStatus(loginStatus, 'Pogrešna lozinka.', 'err');
       }
@@ -250,7 +251,13 @@
         ...(opts.headers || {})
       }
     });
-    return res.json();
+    let data = null;
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
+    }
+    return { ok: res.ok, status: res.status, data };
   }
 
   function showStatus(el, msg, type) {
@@ -262,33 +269,46 @@
 
   // ── Load points ──
   async function loadPoints() {
-    const data = await api('/admin/points');
-    const features = data.features || [];
-    pointCount.textContent = features.length;
+    try {
+      const response = await api('/admin/points');
+      const data = response.data || {};
+      if (!response.ok) {
+        throw new Error(data.error || 'Ne mogu da učitam stavke.');
+      }
 
-    if (!features.length) {
-      pointList.innerHTML = '<li class="empty">Nema evidentiranih stavki.</li>';
-      return;
+      const features = Array.isArray(data.features) ? data.features : [];
+      pointCount.textContent = features.length;
+      renderedFeaturesById = new Map(features.map(feature => [feature?.properties?.id, feature]));
+
+      if (!features.length) {
+        pointList.innerHTML = '<li class="empty">Nema evidentiranih stavki.</li>';
+        return true;
+      }
+
+      pointList.innerHTML = features.map(f => {
+        const p = f.properties || {};
+        const coords = f.geometry?.coordinates || [0, 0];
+        const color = p.condition === 'good' ? 'var(--good)' : p.condition === 'fair' ? 'var(--fair)' : 'var(--poor)';
+        const typeLabel = p.type === 'bench' ? 'Klupa' : 'Korpa';
+        return `
+          <li class="point-item">
+            <span class="point-dot" style="background:${color}"></span>
+            <div class="point-info">
+              <div class="point-id">${escapeHtml(p.id || '—')}</div>
+              <div class="point-meta">${typeLabel} · ${p.condition || '—'} · ${formatCoord(coords[0])}, ${formatCoord(coords[1])} · ${p.date_surveyed || ''}</div>
+            </div>
+            <div class="point-actions">
+              <button class="btn btn-ghost btn-sm" type="button" data-action="edit" data-id="${escapeHtml(p.id || '')}">✎</button>
+              <button class="btn btn-danger btn-sm" type="button" data-action="delete" data-id="${escapeHtml(p.id || '')}">✕</button>
+            </div>
+          </li>`;
+      }).join('');
+
+      return true;
+    } catch (error) {
+      showStatus(statusMsg, error?.message || 'Ne mogu da učitam stavke.', 'err');
+      return false;
     }
-
-    pointList.innerHTML = features.map(f => {
-      const p = f.properties || {};
-      const coords = f.geometry?.coordinates || [0, 0];
-      const color = p.condition === 'good' ? 'var(--good)' : p.condition === 'fair' ? 'var(--fair)' : 'var(--poor)';
-      const typeLabel = p.type === 'bench' ? 'Klupa' : 'Korpa';
-      return `
-        <li class="point-item">
-          <span class="point-dot" style="background:${color}"></span>
-          <div class="point-info">
-            <div class="point-id">${escapeHtml(p.id || '—')}</div>
-            <div class="point-meta">${typeLabel} · ${p.condition || '—'} · ${coords[0].toFixed(4)}, ${coords[1].toFixed(4)} · ${p.date_surveyed || ''}</div>
-          </div>
-          <div class="point-actions">
-            <button class="btn btn-ghost btn-sm" onclick='editPoint(${JSON.stringify(f).replace(/'/g, "&#39;")})'>✎</button>
-            <button class="btn btn-danger btn-sm" onclick="deletePoint('${escapeHtml(p.id)}')">✕</button>
-          </div>
-        </li>`;
-    }).join('');
   }
 
   // ── Form submit (add or edit) ──
@@ -314,24 +334,47 @@
     submitBtn.disabled = true;
 
     try {
+      let response;
       if (editId.value) {
         payload.id = editId.value;
-        await api('/admin/points', { method: 'PUT', body: JSON.stringify(payload) });
+        response = await api('/admin/points', { method: 'PUT', body: JSON.stringify(payload) });
+        if (!response.ok) throw new Error(response.data?.error || 'Greška pri čuvanju.');
         showStatus(statusMsg, 'Stavka izmenjena.');
       } else {
-        await api('/admin/points', { method: 'POST', body: JSON.stringify(payload) });
+        response = await api('/admin/points', { method: 'POST', body: JSON.stringify(payload) });
+        if (!response.ok) throw new Error(response.data?.error || 'Greška pri čuvanju.');
         showStatus(statusMsg, 'Stavka dodata.');
       }
       resetForm();
-      loadPoints();
-    } catch {
-      showStatus(statusMsg, 'Greška pri čuvanju.', 'err');
+      await loadPoints();
+    } catch (error) {
+      showStatus(statusMsg, error?.message || 'Greška pri čuvanju.', 'err');
     }
     submitBtn.disabled = false;
   });
 
+  pointList.addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-action]');
+    if (!button) return;
+
+    const { action, id } = button.dataset;
+    if (!id) return;
+
+    if (action === 'edit') {
+      const feature = renderedFeaturesById.get(id);
+      if (feature) {
+        editPoint(feature);
+      }
+      return;
+    }
+
+    if (action === 'delete') {
+      deletePoint(id);
+    }
+  });
+
   // ── Edit ──
-  window.editPoint = function(feature) {
+  function editPoint(feature) {
     const p = feature.properties || {};
     const c = feature.geometry?.coordinates || [0, 0];
     editId.value = p.id || '';
@@ -350,7 +393,7 @@
     document.getElementById('f-notes').value = p.notes || '';
     fDate.value = p.date_surveyed || new Date().toISOString().slice(0, 10);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }
 
   cancelBtn.addEventListener('click', resetForm);
 
@@ -365,15 +408,28 @@
   }
 
   // ── Delete ──
-  window.deletePoint = async function(id) {
+  async function deletePoint(id) {
     if (!confirm(`Obrisati "${id}"?`)) return;
-    await api(`/admin/points?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
-    showStatus(statusMsg, 'Stavka obrisana.');
-    loadPoints();
-  };
+
+    try {
+      const response = await api(`/admin/points?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (!response.ok) {
+        throw new Error(response.data?.error || 'Greška pri brisanju.');
+      }
+      showStatus(statusMsg, 'Stavka obrisana.');
+      await loadPoints();
+    } catch (error) {
+      showStatus(statusMsg, error?.message || 'Greška pri brisanju.', 'err');
+    }
+  }
 
   function escapeHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function formatCoord(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number.toFixed(4) : '—';
   }
 </script>
 </body>

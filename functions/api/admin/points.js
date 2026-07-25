@@ -1,5 +1,10 @@
 const COLLECTION_KEY = 'banjaluka:points';
 
+function parseNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function checkAuth(context) {
   const auth = context.request.headers.get('Authorization') || '';
   const token = auth.replace(/^Bearer\s+/i, '').trim();
@@ -26,6 +31,41 @@ function json(body, status = 200) {
   });
 }
 
+function normalizeFeatureBody(body, existing = null) {
+  const lng = parseNumber(body.lng ?? existing?.geometry?.coordinates?.[0]);
+  const lat = parseNumber(body.lat ?? existing?.geometry?.coordinates?.[1]);
+
+  if (lng === null || lat === null) {
+    return { error: 'Invalid coordinates' };
+  }
+
+  const type = body.type || existing?.properties?.type || 'bench';
+
+  return {
+    feature: {
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [lng, lat]
+      },
+      properties: {
+        ...existing?.properties,
+        ...body,
+        id: body.id || existing?.properties?.id || `${type}-${Date.now()}`,
+        type,
+        condition: body.condition || existing?.properties?.condition || 'fair',
+        material: body.material ?? existing?.properties?.material ?? '',
+        has_backrest: body.has_backrest ?? existing?.properties?.has_backrest ?? true,
+        bin_type: body.bin_type ?? existing?.properties?.bin_type ?? '',
+        has_lid: body.has_lid ?? existing?.properties?.has_lid ?? false,
+        notes: body.notes ?? existing?.properties?.notes ?? '',
+        date_surveyed: body.date_surveyed || existing?.properties?.date_surveyed || new Date().toISOString().slice(0, 10),
+        source: 'admin'
+      }
+    }
+  };
+}
+
 // GET — list all
 export async function onRequestGet(context) {
   if (!checkAuth(context)) return json({ ok: false, error: 'Unauthorized' }, 401);
@@ -40,29 +80,14 @@ export async function onRequestPost(context) {
   const body = await context.request.json();
   const collection = await readCollection(context.env);
 
-  const feature = {
-    type: 'Feature',
-    geometry: {
-      type: 'Point',
-      coordinates: [Number(body.lng), Number(body.lat)]
-    },
-    properties: {
-      id: body.id || `${body.type}-${Date.now()}`,
-      type: body.type || 'bench',
-      condition: body.condition || 'fair',
-      material: body.material || '',
-      has_backrest: body.has_backrest ?? true,
-      bin_type: body.bin_type || '',
-      has_lid: body.has_lid ?? false,
-      notes: body.notes || '',
-      date_surveyed: body.date_surveyed || new Date().toISOString().slice(0, 10),
-      source: 'admin'
-    }
-  };
+  const normalized = normalizeFeatureBody(body);
+  if (normalized.error) {
+    return json({ ok: false, error: normalized.error }, 400);
+  }
 
-  collection.features.push(feature);
+  collection.features.push(normalized.feature);
   await writeCollection(context.env, collection);
-  return json({ ok: true, feature, total: collection.features.length });
+  return json({ ok: true, feature: normalized.feature, total: collection.features.length });
 }
 
 // PUT — update (id in body)
@@ -76,17 +101,12 @@ export async function onRequestPut(context) {
   if (idx === -1) return json({ ok: false, error: 'Not found' }, 404);
 
   const old = collection.features[idx];
-  collection.features[idx] = {
-    ...old,
-    geometry: {
-      type: 'Point',
-      coordinates: [
-        Number(body.lng ?? old.geometry.coordinates[0]),
-        Number(body.lat ?? old.geometry.coordinates[1])
-      ]
-    },
-    properties: { ...old.properties, ...body, source: 'admin' }
-  };
+  const normalized = normalizeFeatureBody(body, old);
+  if (normalized.error) {
+    return json({ ok: false, error: normalized.error }, 400);
+  }
+
+  collection.features[idx] = normalized.feature;
 
   await writeCollection(context.env, collection);
   return json({ ok: true, feature: collection.features[idx] });
