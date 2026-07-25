@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="sr-Latn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Interaktivna 3D mapa Banje Luke sa klupama, korpama i brzim skokovima do najpoznatijih gradskih tačaka.">
+<title>3D Banja Luka — interaktivna mapa</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%8F%99%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<style>
+  :root {
+    --bg: #08111a;
+    --bg-2: #0c1725;
+    --panel: rgba(12, 18, 28, 0.82);
+    --panel-strong: rgba(9, 14, 22, 0.92);
+    --panel-border: rgba(255, 255, 255, 0.1);
+    --panel-soft: rgba(255, 255, 255, 0.06);
+    --text: #f3f6fb;
+    --muted: rgba(243, 246, 251, 0.7);
+    --muted-strong: rgba(243, 246, 251, 0.9);
+    --accent: #e8b04b;
+    --accent-2: #7fd3c0;
+    --accent-3: #f06f5d;
+    --shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+    --radius: 22px;
+    --good: #2ecc71;
+    --fair: #f1c40f;
+    --poor: #e74c3c;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    background:
+      radial-gradient(circle at top left, rgba(232, 176, 75, 0.17), transparent 32%),
+      radial-gradient(circle at bottom right, rgba(127, 211, 192, 0.16), transparent 36%),
+      linear-gradient(180deg, #0b1520 0%, #08111a 56%, #060c13 100%);
+    color: var(--text);
+    font-family: "Space Grotesk", "Segoe UI", sans-serif;
+    overflow: hidden;
+  }
+
+  #app {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+  }
+
+  #map {
+    position: absolute;
+    inset: 0;
+  }
+
+  .title-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 30;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(8, 12, 18, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(16px) saturate(130%);
+    -webkit-backdrop-filter: blur(16px) saturate(130%);
+    box-shadow: var(--shadow);
+    user-select: none;
+  }
+
+  .title-badge__icon {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .title-badge__text {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .title-badge__text em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .sidebar {
+    position: absolute;
+    top: 70px;
+    left: 16px;
+    bottom: 16px;
+    z-index: 25;
+    width: min(372px, calc(100vw - 32px));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, rgba(12, 18, 28, 0.9), rgba(8, 12, 18, 0.84));
+    border: 1px solid var(--panel-border);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(18px) saturate(130%);
+    -webkit-backdrop-filter: blur(18px) saturate(130%);
+  }
+
+  .sidebar__header {
+    padding: 22px 20px 18px;
+    border-bottom: 1px solid var(--panel-border);
+    background:
+      linear-gradient(135deg, rgba(232, 176, 75, 0.18), transparent 36%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 64%);
+  }
+
+  .sidebar__eyebrow {
+    margin: 0 0 8px;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+  }
+
+  .sidebar__header h1 {
+    margin: 0;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 30px;
+    line-height: 1.03;
+    letter-spacing: -0.04em;
+  }
+
+  .sidebar__header p {
+    margin: 12px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--muted-strong);
+    font-size: 12px;
+  }
+
+  .status-pill::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--accent-2);
+    box-shadow: 0 0 0 4px rgba(127, 211, 192, 0.12);
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding: 16px 20px 0;
+  }
+
+  .summary-card {
+    padding: 12px 12px 11px;
+    border-radius: 16px;
+    background: var(--panel-soft);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .summary-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  .summary-label {
+    display: block;
+    margin-top: 5px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .sidebar__section {
+    padding: 18px 20px 0;
+  }
+
+  .section__title {
+    margin: 0 0 10px;
+    color: rgba(243, 246, 251, 0.9);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .landmark-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .landmark-item {
+    width: 100%;
+    padding: 12px 13px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+  }
+
+  .landmark-item:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .landmark-item--active {
+    background: rgba(232, 176, 75, 0.12);
+    border-color: rgba(232, 176, 75, 0.32);
+  }
+
+  .landmark-item__name {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .landmark-item__desc {
+    display: block;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  .filter-grid {
+    display: grid;
+    gap: 8px;
+  }
+
+  .filter-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+  }
+
+  .filter-card:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .filter-card input {
+    margin: 0;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-2);
+    flex-shrink: 0;
+  }
+
+  .filter-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .filter-card__label {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .filter-card__meta {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.35;
+  }
+
+  .swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
+  }
+
+  .swatch-good {
+    background: var(--good);
+  }
+
+  .swatch-fair {
+    background: var(--fair);
+  }
+
+  .swatch-poor {
+    background: var(--poor);
+  }
+
+  .sidebar__footer {
+    margin-top: auto;
+    padding: 16px 20px 18px;
+    border-top: 1px solid var(--panel-border);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .sidebar__footer code {
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--accent-2);
+  }
+
+  .control-panel {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 25;
+    width: min(340px, calc(100vw - 32px));
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, rgba(12, 18, 28, 0.9), rgba(8, 12, 18, 0.84));
+    border: 1px solid var(--panel-border);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(18px) saturate(130%);
+    -webkit-backdrop-filter: blur(18px) saturate(130%);
+  }
+
+  .search-box {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+  }
+
+  .search-box__input {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 13px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    outline: none;
+  }
+
+  .search-box__input::placeholder {
+    color: rgba(243, 246, 251, 0.45);
+  }
+
+  .search-box__input:focus {
+    border-color: rgba(232, 176, 75, 0.56);
+    box-shadow: 0 0 0 4px rgba(232, 176, 75, 0.12);
+  }
+
+  .btn {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 14px;
+    padding: 11px 13px;
+    cursor: pointer;
+    transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .btn--primary {
+    background: linear-gradient(135deg, rgba(232, 176, 75, 0.96), rgba(247, 219, 128, 0.96));
+    border-color: rgba(232, 176, 75, 0.38);
+    color: #11151c;
+  }
+
+  .btn--primary:hover {
+    background: linear-gradient(135deg, rgba(239, 187, 90, 0.98), rgba(250, 227, 145, 0.98));
+  }
+
+  .btn--grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn__icon {
+    font-size: 14px;
+    line-height: 1;
+    color: inherit;
+  }
+
+  .control-stack {
+    display: grid;
+    gap: 8px;
+  }
+
+  .search-results {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 35;
+    overflow: hidden;
+    max-height: 236px;
+    border-radius: 16px;
+    background: rgba(9, 14, 22, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow);
+  }
+
+  .search-result {
+    display: block;
+    width: 100%;
+    padding: 11px 12px;
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.4;
+    cursor: pointer;
+  }
+
+  .search-result:last-child {
+    border-bottom: 0;
+  }
+
+  .search-result:hover {
+    background: rgba(232, 176, 75, 0.12);
+  }
+
+  .search-status {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+
+  .search-status[data-tone="error"] {
+    color: #f0c4ba;
+  }
+
+  .search-status[data-tone="success"] {
+    color: #c7f3df;
+  }
+
+  .sync-toast {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 35;
+    max-width: min(620px, calc(100vw - 32px));
+    padding: 10px 15px;
+    border-radius: 999px;
+    background: rgba(9, 14, 22, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow);
+    color: var(--muted-strong);
+    font-size: 13px;
+    line-height: 1.4;
+    text-align: center;
+    backdrop-filter: blur(14px) saturate(130%);
+    -webkit-backdrop-filter: blur(14px) saturate(130%);
+  }
+
+  .mode-badge {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    z-index: 25;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    max-width: min(540px, calc(100vw - 32px));
+    padding: 10px 14px;
+    border-radius: 16px;
+    background: rgba(9, 14, 22, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+    backdrop-filter: blur(16px) saturate(130%);
+    -webkit-backdrop-filter: blur(16px) saturate(130%);
+  }
+
+  .mode-badge__text {
+    flex: 1;
+  }
+
+  .mode-badge__close {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+
+  .mode-badge__close:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .landmark-marker {
+    position: relative;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    border: 0;
+    background: transparent;
+  }
+
+  .landmark-dot {
+    position: absolute;
+    inset: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid #0a0f16;
+    box-shadow: 0 0 0 6px rgba(232, 176, 75, 0.16);
+  }
+
+  .landmark-pulse {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(232, 176, 75, 0.36);
+    animation: landmark-pulse 2.2s ease-out infinite;
+  }
+
+  .landmark-marker--active .landmark-dot {
+    background: var(--accent-2);
+    box-shadow: 0 0 0 6px rgba(127, 211, 192, 0.16);
+  }
+
+  @keyframes landmark-pulse {
+    0% {
+      transform: scale(0.7);
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(2.3);
+      opacity: 0;
+    }
+  }
+
+  .popup-card h3 {
+    margin: 0 0 6px;
+    font-size: 15px;
+    color: var(--accent);
+    line-height: 1.2;
+  }
+
+  .popup-card p {
+    margin: 4px 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--text);
+  }
+
+  .popup-card__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 9px;
+    border-radius: 999px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: capitalize;
+    vertical-align: middle;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(232, 176, 75, 0.11), transparent 50%),
+      radial-gradient(circle at 80% 100%, rgba(127, 211, 192, 0.08), transparent 48%),
+      rgba(6, 10, 16, 0.9);
+  }
+
+  .overlay[hidden] {
+    display: none;
+  }
+
+  .overlay__card {
+    width: min(560px, 100%);
+    padding: 30px 32px;
+    border-radius: 24px;
+    background: rgba(10, 15, 22, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: var(--shadow);
+  }
+
+  .overlay__card h2 {
+    margin: 0 0 10px;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 26px;
+    line-height: 1.05;
+  }
+
+  .overlay__card p {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .overlay__card code {
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--accent-2);
+  }
+
+  .maplibregl-ctrl-group,
+  .maplibregl-ctrl-scale,
+  .maplibregl-ctrl-attrib {
+    background: rgba(9, 14, 22, 0.72) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: var(--shadow) !important;
+    backdrop-filter: blur(16px) saturate(130%);
+    -webkit-backdrop-filter: blur(16px) saturate(130%);
+  }
+
+  .maplibregl-ctrl-group button {
+    background: transparent !important;
+  }
+
+  .maplibregl-ctrl-icon {
+    filter: invert(0.92);
+  }
+
+  .maplibregl-popup-content {
+    background: rgba(10, 15, 22, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    color: var(--text);
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .maplibregl-popup-tip {
+    border-top-color: rgba(10, 15, 22, 0.96) !important;
+    border-bottom-color: rgba(10, 15, 22, 0.96) !important;
+  }
+
+  .maplibregl-popup-close-button {
+    color: var(--muted);
+    font-size: 15px;
+    padding: 4px 8px;
+  }
+
+  .maplibregl-popup-close-button:hover {
+    color: var(--text);
+    background: transparent;
+  }
+
+  @media (max-width: 820px) {
+    .title-badge {
+      left: 12px;
+      top: 12px;
+    }
+
+    .control-panel {
+      width: min(310px, calc(100vw - 24px));
+      right: 12px;
+      top: 12px;
+    }
+
+    .sidebar {
+      left: 12px;
+      right: 12px;
+      top: auto;
+      bottom: 12px;
+      width: auto;
+      max-height: min(58vh, 620px);
+    }
+
+    .sidebar__header h1 {
+      font-size: 26px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    html,
+    body {
+      overflow: hidden;
+    }
+
+    .title-badge {
+      right: 12px;
+      width: calc(100vw - 24px);
+      justify-content: center;
+    }
+
+    .control-panel {
+      width: calc(100vw - 24px);
+      right: 12px;
+      top: 66px;
+    }
+
+    .summary-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .search-box {
+      grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+      max-height: min(56vh, 560px);
+      top: auto;
+      bottom: 12px;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="map" aria-label="3D mapa Banje Luke"></div>
+
+  <div class="title-badge" aria-label="Naslov aplikacije">
+    <span class="title-badge__icon">🏙️</span>
+    <span class="title-badge__text">3D <em>Banja Luka</em></span>
+  </div>
+
+  <aside class="sidebar" aria-label="Pregled i filteri">
+    <div class="sidebar__header">
+      <h1>Banjaluka, klupe i korpe</h1>
+      <p>
+        Pregledajte urbani inventar u 3D sloju grada, skočite do ključnih
+        lokacija i pratite šta je već mapirano u centru Banje Luke.
+      </p>
+      <div class="status-row">
+        <span class="status-pill">OpenFreeMap + MapLibre</span>
+        <span class="status-pill">3D zgrade i terenski podaci</span>
+      </div>
+    </div>
+
+    <div class="summary-grid" aria-label="Sažetak podataka">
+      <div class="summary-card">
+        <span class="summary-value" id="mapped-count">0</span>
+        <span class="summary-label">Ucrtano</span>
+      </div>
+      <div class="summary-card">
+        <span class="summary-value" id="visible-count">0</span>
+        <span class="summary-label">Vidljivo</span>
+      </div>
+      <div class="summary-card">
+        <span class="summary-value" id="landmark-count">0</span>
+        <span class="summary-label">Tačke</span>
+      </div>
+    </div>
+
+    <div class="sidebar__section">
+      <div class="section__title">Tačke</div>
+      <p style="margin: 0 0 10px; color: var(--muted); font-size: 12px; line-height: 1.45;">
+        Ovo su gradske tačke na koje možete odmah da poletite: centar, Kastel, Ferhadija i druge.
+      </p>
+      <div id="landmark-list" class="landmark-list"></div>
+    </div>
+
+    <div class="sidebar__section">
+      <div class="section__title">Filteri</div>
+      <div class="filter-grid">
+        <label class="filter-card">
+          <input type="checkbox" data-filter="type" value="bench" checked>
+          <span class="swatch" style="background: var(--accent-2)"></span>
+          <span class="filter-card__body">
+            <span class="filter-card__label">Klupe</span>
+            <span class="filter-card__meta">Drvene i metalne pozicije u javnom prostoru.</span>
+          </span>
+        </label>
+
+        <label class="filter-card">
+          <input type="checkbox" data-filter="type" value="bin" checked>
+          <span class="swatch" style="background: var(--accent)"></span>
+          <span class="filter-card__body">
+            <span class="filter-card__label">Korpe za otpatke</span>
+            <span class="filter-card__meta">Obične i korpe sa poklopcem ili za reciklažu.</span>
+          </span>
+        </label>
+
+        <label class="filter-card">
+          <input type="checkbox" data-filter="condition" value="good" checked>
+          <span class="swatch swatch-good"></span>
+          <span class="filter-card__body">
+            <span class="filter-card__label">Dobro</span>
+            <span class="filter-card__meta">Inventar koji vizuelno izgleda uredno i stabilno.</span>
+          </span>
+        </label>
+
+        <label class="filter-card">
+          <input type="checkbox" data-filter="condition" value="fair" checked>
+          <span class="swatch swatch-fair"></span>
+          <span class="filter-card__body">
+            <span class="filter-card__label">Zadovoljavajuće</span>
+            <span class="filter-card__meta">Ima tragove habanja, ali je i dalje u upotrebi.</span>
+          </span>
+        </label>
+
+        <label class="filter-card">
+          <input type="checkbox" data-filter="condition" value="poor" checked>
+          <span class="swatch swatch-poor"></span>
+          <span class="filter-card__body">
+            <span class="filter-card__label">Loše</span>
+            <span class="filter-card__meta">Potrebna je zamena, popravka ili nova evidencija.</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <div class="sidebar__footer">
+      Podaci se čitaju iz <code>points.geojson</code>.
+      Za dodavanje ili izmenu stavki, uredite taj fajl i objavite promene.
+    </div>
+  </aside>
+
+  <section class="control-panel" aria-label="Kontrole mape">
+    <div class="search-box">
+      <input
+        id="search-input"
+        class="search-box__input"
+        type="search"
+        placeholder="Pretraži ulicu ili mesto u Banjoj Luci"
+        aria-label="Pretraži lokaciju"
+      >
+      <button class="btn btn--primary" id="search-button" type="button">Pretraži</button>
+      <div class="search-results" id="search-results" hidden></div>
+    </div>
+    <div class="search-status" id="search-status" hidden></div>
+
+    <div class="control-stack">
+      <button class="btn btn--grid" id="reset-button" type="button">
+        <span class="btn__icon">↺</span>
+        <span>Početni pogled</span>
+      </button>
+      <button class="btn btn--grid" id="toggle-3d-button" type="button">
+        <span class="btn__icon" id="toggle-3d-icon">⬡</span>
+        <span id="toggle-3d-label">2D pogled</span>
+      </button>
+      <button class="btn btn--grid" id="locate-button" type="button">
+        <span class="btn__icon">◎</span>
+        <span>Moja lokacija</span>
+      </button>
+    </div>
+  </section>
+
+  <div class="sync-toast" id="sync-status" aria-live="polite">Učitavanje podataka...</div>
+
+  <div class="mode-badge" id="mode-badge" role="note">
+    <span class="mode-badge__text">Free OSM režim sa OpenFreeMap stilom. Dodajte token samo ako želite druge izvore.</span>
+    <button class="mode-badge__close" id="mode-badge-close" type="button" aria-label="Zatvori obaveštenje">✕</button>
+  </div>
+
+  <div class="overlay" id="startup-overlay" hidden>
+    <div class="overlay__card">
+      <h2>Mapa se ne može pokrenuti</h2>
+      <p>
+        Ovaj prikaz zahteva WebGL. Ako pregledač ne podržava 3D canvas,
+        probajte noviju verziju ili drugi pregledač.
+      </p>
+      <p>
+        Kada sve radi, očekujte 3D zgrade, brze skokove do Banja Luke i
+        sloj sa vašim inventarom.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script>
+  const CITY = {
+    center: [17.1910, 44.7725],
+    zoom: 16.35,
+    pitch3d: 64,
+    pitch2d: 0,
+    bearing: -18,
+    searchViewbox: [17.08, 44.84, 17.31, 44.72]
+  };
+
+  const DATA_URL = '/points.geojson';
+
+  const landmarks = [
+    {
+      id: 'kastel',
+      name: 'Tvrđava Kastel',
+      description: 'Stara gradska jezgra uz Vrbas i jedan od najjačih obala grada.',
+      coordinates: [17.1908511, 44.7664626],
+      camera: { zoom: 16.9, pitch: 68, bearing: 18 }
+    },
+    {
+      id: 'ferhadija',
+      name: 'Ferhadija',
+      description: 'Obnovljeni simbol grada i važna tačka identiteta.',
+      coordinates: [17.1872838, 44.7674131],
+      camera: { zoom: 16.9, pitch: 66, bearing: -38 }
+    },
+    {
+      id: 'trg-krajine',
+      name: 'Trg Krajine',
+      description: 'Gradski dnevni boravak, šetnja i okupljanje u centru.',
+      coordinates: [17.1893558, 44.7699766],
+      camera: { zoom: 17.0, pitch: 63, bearing: 90 }
+    },
+    {
+      id: 'park-petar-kocic',
+      name: 'Park Petar Kočić',
+      description: 'Zelena pauza odmah uz najveći gradski promet.',
+      coordinates: [17.1884038, 44.7703348],
+      camera: { zoom: 17.0, pitch: 64, bearing: 132 }
+    },
+    {
+      id: 'hram-hrista-spasitelja',
+      name: 'Hram Hrista Spasitelja',
+      description: 'Monumentalna crkva i vizuelno sidro gradskog centra.',
+      coordinates: [17.1917339, 44.7722669],
+      camera: { zoom: 16.95, pitch: 67, bearing: -16 }
+    },
+    {
+      id: 'banski-dvor',
+      name: 'Banski dvor',
+      description: 'Kulturni centar, terasa i jedna od najboljih 3D tačaka.',
+      coordinates: [17.1923150, 44.7728986],
+      camera: { zoom: 16.95, pitch: 66, bearing: -52 }
+    }
+  ];
+
+  const typeMeta = {
+    bench: {
+      label: 'klupa',
+      icon: '🪑',
+      color: '#7fd3c0'
+    },
+    bin: {
+      label: 'korpa za otpatke',
+      icon: '🗑️',
+      color: '#e8b04b'
+    }
+  };
+
+  const conditionMeta = {
+    good: {
+      label: 'dobro',
+      color: '#2ecc71'
+    },
+    fair: {
+      label: 'zadovoljavajuće',
+      color: '#f1c40f'
+    },
+    poor: {
+      label: 'loše',
+      color: '#e74c3c'
+    }
+  };
+
+  const BUILDING_LAYER_ID = 'banja-luka-3d-buildings';
+  const INVENTORY_LAYER_ID = 'banja-luka-inventory';
+  const INVENTORY_HALO_LAYER_ID = 'banja-luka-inventory-halo';
+
+  const mappedCountEl = document.getElementById('mapped-count');
+  const visibleCountEl = document.getElementById('visible-count');
+  const landmarkCountEl = document.getElementById('landmark-count');
+  const landmarkListEl = document.getElementById('landmark-list');
+  const syncStatusEl = document.getElementById('sync-status');
+  const searchInputEl = document.getElementById('search-input');
+  const searchButtonEl = document.getElementById('search-button');
+  const searchResultsEl = document.getElementById('search-results');
+  const searchStatusEl = document.getElementById('search-status');
+  const resetButtonEl = document.getElementById('reset-button');
+  const toggle3dButtonEl = document.getElementById('toggle-3d-button');
+  const toggle3dLabelEl = document.getElementById('toggle-3d-label');
+  const toggle3dIconEl = document.getElementById('toggle-3d-icon');
+  const locateButtonEl = document.getElementById('locate-button');
+  const modeBadgeEl = document.getElementById('mode-badge');
+  const modeBadgeCloseEl = document.getElementById('mode-badge-close');
+  const startupOverlayEl = document.getElementById('startup-overlay');
+
+  let map;
+  let currentCollection = emptyCollection();
+  let buildingLayerEnabled = true;
+  let activeLandmarkId = '';
+  let landmarkMarkers = new Map();
+  let inventorySourceReady = false;
+
+  function emptyCollection() {
+    return {
+      type: 'FeatureCollection',
+      features: []
+    };
+  }
+
+  function normalizeCollection(value) {
+    if (!value) {
+      return emptyCollection();
+    }
+
+    if (Array.isArray(value)) {
+      return {
+        type: 'FeatureCollection',
+        features: value.filter(Boolean)
+      };
+    }
+
+    if (value.type === 'FeatureCollection' && Array.isArray(value.features)) {
+      return {
+        ...value,
+        type: 'FeatureCollection',
+        features: value.features.filter(Boolean)
+      };
+    }
+
+    if (value.type === 'Feature') {
+      return {
+        type: 'FeatureCollection',
+        features: [value]
+      };
+    }
+
+    if (Array.isArray(value.features)) {
+      return {
+        type: 'FeatureCollection',
+        features: value.features.filter(Boolean)
+      };
+    }
+
+    return emptyCollection();
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  function setSyncStatus(message) {
+    syncStatusEl.textContent = message;
+  }
+
+  function setSearchStatus(message, tone = '') {
+    if (!message) {
+      searchStatusEl.hidden = true;
+      searchStatusEl.removeAttribute('data-tone');
+      searchStatusEl.textContent = '';
+      return;
+    }
+
+    searchStatusEl.textContent = message;
+    searchStatusEl.hidden = false;
+    if (tone) {
+      searchStatusEl.setAttribute('data-tone', tone);
+    } else {
+      searchStatusEl.removeAttribute('data-tone');
+    }
+  }
+
+  function clearSearchResults() {
+    searchResultsEl.hidden = true;
+    searchResultsEl.innerHTML = '';
+  }
+
+  function getActiveValues(filterName) {
+    return Array.from(document.querySelectorAll(`input[data-filter="${filterName}"]:checked`))
+      .map(el => el.value);
+  }
+
+  function matchesFilters(feature) {
+    const props = feature.properties || {};
+    const activeTypes = getActiveValues('type');
+    const activeConditions = getActiveValues('condition');
+    return activeTypes.includes(props.type) && activeConditions.includes(props.condition);
+  }
+
+  function updateCounters() {
+    mappedCountEl.textContent = String(currentCollection.features.length);
+    visibleCountEl.textContent = String(currentCollection.features.filter(matchesFilters).length);
+    landmarkCountEl.textContent = String(landmarks.length);
+  }
+
+  function buildLayerFilter() {
+    const activeTypes = getActiveValues('type');
+    const activeConditions = getActiveValues('condition');
+
+    if (!activeTypes.length || !activeConditions.length) {
+      return ['==', ['get', 'id'], '__no_results__'];
+    }
+
+    return [
+      'all',
+      ['any', ...activeTypes.map((type) => ['==', ['get', 'type'], type])],
+      ['any', ...activeConditions.map((condition) => ['==', ['get', 'condition'], condition])]
+    ];
+  }
+
+  function applyInventoryFilter() {
+    if (!map || !map.getLayer(INVENTORY_LAYER_ID)) {
+      return;
+    }
+
+    map.setFilter(INVENTORY_LAYER_ID, buildLayerFilter());
+
+    if (map.getLayer(INVENTORY_HALO_LAYER_ID)) {
+      map.setFilter(INVENTORY_HALO_LAYER_ID, buildLayerFilter());
+    }
+
+    updateCounters();
+  }
+
+  function syncInventorySource() {
+    if (!map || !map.isStyleLoaded()) {
+      return;
+    }
+
+    const source = map.getSource('inventory-points');
+
+    if (source) {
+      source.setData(currentCollection);
+      inventorySourceReady = true;
+      return;
+    }
+
+    map.addSource('inventory-points', {
+      type: 'geojson',
+      data: currentCollection
+    });
+
+    map.addLayer({
+      id: INVENTORY_HALO_LAYER_ID,
+      type: 'circle',
+      source: 'inventory-points',
+      paint: {
+        'circle-radius': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          14,
+          11,
+          17,
+          16
+        ],
+        'circle-color': [
+          'match',
+          ['get', 'condition'],
+          'good',
+          '#2ecc71',
+          'fair',
+          '#f1c40f',
+          'poor',
+          '#e74c3c',
+          '#7fd3c0'
+        ],
+        'circle-opacity': 0.18,
+        'circle-blur': 0.1
+      }
+    });
+
+    map.addLayer({
+      id: INVENTORY_LAYER_ID,
+      type: 'circle',
+      source: 'inventory-points',
+      paint: {
+        'circle-radius': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          14,
+          5.5,
+          17,
+          9.5
+        ],
+        'circle-color': [
+          'match',
+          ['get', 'condition'],
+          'good',
+          '#2ecc71',
+          'fair',
+          '#f1c40f',
+          'poor',
+          '#e74c3c',
+          '#7fd3c0'
+        ],
+        'circle-stroke-color': '#f7f8fb',
+        'circle-stroke-width': 1.6,
+        'circle-opacity': 0.94
+      }
+    });
+
+    map.on('click', INVENTORY_LAYER_ID, (event) => {
+      const feature = event.features && event.features[0];
+      if (!feature) {
+        return;
+      }
+      openFeaturePopup(feature, event.lngLat);
+    });
+
+    map.on('mouseenter', INVENTORY_LAYER_ID, () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+
+    map.on('mouseleave', INVENTORY_LAYER_ID, () => {
+      map.getCanvas().style.cursor = '';
+    });
+
+    inventorySourceReady = true;
+    applyInventoryFilter();
+  }
+
+  function openFeaturePopup(feature, lngLat) {
+    const props = feature.properties || {};
+    const type = typeMeta[props.type] || {
+      label: props.type || 'stavka',
+      icon: '•',
+      color: '#7fd3c0'
+    };
+    const condition = conditionMeta[props.condition] || {
+      label: props.condition || 'nepoznato',
+      color: '#7fd3c0'
+    };
+
+    const extraRows = [];
+
+    if (props.type === 'bench') {
+      extraRows.push(`<p>Materijal: ${escapeHtml(props.material || '—')}</p>`);
+      extraRows.push(`<p>Naslon: ${props.has_backrest ? 'Da' : 'Ne'}</p>`);
+    } else if (props.type === 'bin') {
+      extraRows.push(`<p>Vrsta korpe: ${escapeHtml(props.bin_type || '—')}</p>`);
+      extraRows.push(`<p>Poklopac: ${props.has_lid ? 'Da' : 'Ne'}</p>`);
+    }
+
+    if (props.notes) {
+      extraRows.push(`<p>Napomena: ${escapeHtml(props.notes)}</p>`);
+    }
+
+    extraRows.push(`<p>Popisano: ${escapeHtml(props.date_surveyed || 'nepoznato')}</p>`);
+
+    new maplibregl.Popup({
+      closeButton: true,
+      closeOnClick: true,
+      maxWidth: '280px',
+      offset: 16
+    })
+      .setLngLat(lngLat || feature.geometry.coordinates)
+      .setHTML(`
+        <div class="popup-card">
+          <h3>${escapeHtml(type.icon)} ${escapeHtml(type.label)}</h3>
+          <p><span class="popup-card__badge" style="background:${condition.color}">${escapeHtml(condition.label)}</span></p>
+          ${extraRows.join('')}
+        </div>
+      `)
+      .addTo(map);
+  }
+
+  function setActiveLandmark(id) {
+    activeLandmarkId = id || '';
+
+    document.querySelectorAll('.landmark-item').forEach((button) => {
+      button.classList.toggle('landmark-item--active', button.dataset.landmarkId === activeLandmarkId);
+    });
+
+    landmarkMarkers.forEach((marker, markerId) => {
+      const element = marker.getElement();
+      if (element) {
+        element.classList.toggle('landmark-marker--active', markerId === activeLandmarkId);
+      }
+    });
+  }
+
+  function flyToLandmark(landmark) {
+    setActiveLandmark(landmark.id);
+    map.flyTo({
+      center: landmark.coordinates,
+      zoom: landmark.camera.zoom,
+      pitch: landmark.camera.pitch,
+      bearing: landmark.camera.bearing,
+      duration: 2600,
+      curve: 1.4,
+      essential: true
+    });
+  }
+
+  function renderLandmarks() {
+    landmarkListEl.innerHTML = '';
+    landmarkMarkers.forEach((marker) => marker.remove());
+    landmarkMarkers.clear();
+
+    const fragment = document.createDocumentFragment();
+
+    landmarks.forEach((landmark) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'landmark-item';
+      button.dataset.landmarkId = landmark.id;
+      button.innerHTML = `
+        <span class="landmark-item__name">${escapeHtml(landmark.name)}</span>
+        <span class="landmark-item__desc">${escapeHtml(landmark.description)}</span>
+      `;
+      button.addEventListener('click', () => {
+        flyToLandmark(landmark);
+        const marker = landmarkMarkers.get(landmark.id);
+        if (marker && marker.getPopup()) {
+          marker.getPopup().addTo(map);
+        }
+      });
+      fragment.appendChild(button);
+
+      const markerElement = document.createElement('button');
+      markerElement.type = 'button';
+      markerElement.className = 'landmark-marker';
+      markerElement.setAttribute('aria-label', landmark.name);
+      markerElement.title = landmark.name;
+      markerElement.innerHTML = '<span class="landmark-pulse"></span><span class="landmark-dot"></span>';
+
+      markerElement.addEventListener('click', () => flyToLandmark(landmark));
+
+      const popup = new maplibregl.Popup({
+        closeButton: true,
+        closeOnClick: true,
+        maxWidth: '280px',
+        offset: 18
+      }).setHTML(`
+        <div class="popup-card">
+          <h3>${escapeHtml(landmark.name)}</h3>
+          <p>${escapeHtml(landmark.description)}</p>
+          <p>Brzi skok do ove tačke otvara 3D pogled u centru grada.</p>
+        </div>
+      `);
+
+      const marker = new maplibregl.Marker({
+        element: markerElement,
+        anchor: 'bottom'
+      })
+        .setLngLat(landmark.coordinates)
+        .setPopup(popup)
+        .addTo(map);
+
+      landmarkMarkers.set(landmark.id, marker);
+    });
+
+    landmarkListEl.appendChild(fragment);
+  }
+
+  async function loadCollection() {
+    try {
+      const response = await fetch(DATA_URL, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return normalizeCollection(await response.json());
+    } catch {
+      return emptyCollection();
+    }
+  }
+
+  function configureAtmosphere() {
+    if (typeof map.setFog === 'function') {
+      try {
+        map.setFog({
+          range: [0.7, 9],
+          color: '#dfe4ea',
+          'high-color': '#c3cfdd',
+          'space-color': '#08111a',
+          'horizon-blend': 0.08,
+          'star-intensity': 0.08
+        });
+      } catch (error) {
+        console.warn('Fog not supported:', error);
+      }
+    }
+
+    if (typeof map.setLight === 'function') {
+      try {
+        const now = new Date();
+        const hours = now.getHours() + now.getMinutes() / 60;
+        const cycle = Math.max(0, Math.min(1, (hours - 6) / 12));
+        const azimuth = 180 * cycle;
+        const elevation = 90 * Math.sin(Math.PI * cycle);
+        const aboveHorizon = elevation > 0;
+
+        map.setLight({
+          anchor: 'viewport',
+          color: aboveHorizon ? '#ffffff' : '#aeb8cf',
+          intensity: aboveHorizon ? 0.7 : 0.28,
+          position: [1.1, azimuth, Math.max(18, Math.min(78, elevation + 20))]
+        });
+      } catch (error) {
+        console.warn('Light not supported:', error);
+      }
+    }
+  }
+
+  function add3DBuildings() {
+    if (map.getLayer(BUILDING_LAYER_ID)) {
+      return;
+    }
+
+    if (!map.getSource('openfreemap')) {
+      map.addSource('openfreemap', {
+        type: 'vector',
+        url: 'https://tiles.openfreemap.org/planet'
+      });
+    }
+
+    const layers = map.getStyle().layers || [];
+    const labelLayerId = layers.find((layer) => layer.type === 'symbol' && layer.layout && layer.layout['text-field'])?.id;
+
+    const layer = {
+      id: BUILDING_LAYER_ID,
+      source: 'openfreemap',
+      'source-layer': 'building',
+      type: 'fill-extrusion',
+      minzoom: 15,
+      filter: ['!=', ['get', 'hide_3d'], true],
+      paint: {
+        'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 0],
+        'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+        'fill-extrusion-color': [
+          'interpolate',
+          ['linear'],
+          ['coalesce', ['get', 'render_height'], 0],
+          0,
+          '#8c94a7',
+          35,
+          '#a3aab9',
+          120,
+          '#c5a77e',
+          280,
+          '#e8b04b'
+        ],
+        'fill-extrusion-opacity': 0.9,
+        'fill-extrusion-vertical-gradient': true
+      }
+    };
+
+    try {
+      if (labelLayerId) {
+        map.addLayer(layer, labelLayerId);
+      } else {
+        map.addLayer(layer);
+      }
+    } catch (error) {
+      console.warn('3D building layer fallback:', error);
+      delete layer.paint['fill-extrusion-vertical-gradient'];
+      if (labelLayerId) {
+        map.addLayer(layer, labelLayerId);
+      } else {
+        map.addLayer(layer);
+      }
+    }
+  }
+
+  function set3DMode(enabled, { animate = true } = {}) {
+    buildingLayerEnabled = enabled;
+
+    if (map.getLayer(BUILDING_LAYER_ID)) {
+      map.setLayoutProperty(BUILDING_LAYER_ID, 'visibility', enabled ? 'visible' : 'none');
+    }
+
+    map.easeTo({
+      pitch: enabled ? CITY.pitch3d : CITY.pitch2d,
+      bearing: enabled ? CITY.bearing : map.getBearing(),
+      duration: animate ? 1200 : 0,
+      essential: true
+    });
+
+    toggle3dLabelEl.textContent = enabled ? '2D pogled' : '3D pogled';
+    toggle3dIconEl.textContent = enabled ? '⬡' : '▢';
+  }
+
+  function resetView() {
+    setActiveLandmark('');
+    map.flyTo({
+      center: CITY.center,
+      zoom: CITY.zoom,
+      pitch: buildingLayerEnabled ? CITY.pitch3d : CITY.pitch2d,
+      bearing: buildingLayerEnabled ? CITY.bearing : map.getBearing(),
+      duration: 2200,
+      curve: 1.4,
+      essential: true
+    });
+  }
+
+  async function geocode(query) {
+    const viewbox = CITY.searchViewbox;
+    const url = new URL('https://nominatim.openstreetmap.org/search');
+    url.searchParams.set('format', 'jsonv2');
+    url.searchParams.set('limit', '5');
+    url.searchParams.set('bounded', '1');
+    url.searchParams.set('viewbox', viewbox.join(','));
+    url.searchParams.set('accept-language', 'sr-Latn');
+    url.searchParams.set('addressdetails', '0');
+    url.searchParams.set('q', query);
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Geocoding request failed (${response.status})`);
+    }
+
+    const results = await response.json();
+    return (results || []).map((item) => ({
+      place_name: item.display_name,
+      center: [parseFloat(item.lon), parseFloat(item.lat)]
+    }));
+  }
+
+  function renderSearchResults(results) {
+    searchResultsEl.innerHTML = '';
+
+    results.forEach((result) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'search-result';
+      button.textContent = result.place_name;
+      button.addEventListener('click', () => {
+        clearSearchResults();
+        setSearchStatus('');
+        map.flyTo({
+          center: result.center,
+          zoom: Math.max(map.getZoom(), 16),
+          pitch: buildingLayerEnabled ? CITY.pitch3d : CITY.pitch2d,
+          bearing: buildingLayerEnabled ? CITY.bearing : map.getBearing(),
+          duration: 2600,
+          curve: 1.4,
+          essential: true
+        });
+      });
+      searchResultsEl.appendChild(button);
+    });
+
+    searchResultsEl.hidden = false;
+  }
+
+  async function runSearch() {
+    const query = searchInputEl.value.trim();
+    clearSearchResults();
+
+    if (!query) {
+      setSearchStatus('Unesite ulicu ili mjesto prvo.', 'error');
+      return;
+    }
+
+    setSearchStatus('Pretraga je u toku...');
+
+    try {
+      const results = await geocode(query);
+
+      if (!results.length) {
+        setSearchStatus('Nema rezultata. Probajte drugi pojam.', 'error');
+        return;
+      }
+
+      setSearchStatus('');
+      renderSearchResults(results);
+    } catch (error) {
+      console.error(error);
+      setSearchStatus('Pretraga nije uspjela. Provjerite vezu i pokušajte ponovo.', 'error');
+    }
+  }
+
+  function attachEventHandlers() {
+    document.querySelectorAll('#app input[type="checkbox"]').forEach((input) => {
+      input.addEventListener('change', () => {
+        applyInventoryFilter();
+      });
+    });
+
+    searchButtonEl.addEventListener('click', runSearch);
+    searchInputEl.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        runSearch();
+      }
+      if (event.key === 'Escape') {
+        clearSearchResults();
+        setSearchStatus('');
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('.search-box')) {
+        clearSearchResults();
+      }
+    });
+
+    resetButtonEl.addEventListener('click', () => {
+      document.querySelectorAll('#app input[type="checkbox"]').forEach((input) => {
+        input.checked = true;
+      });
+      clearSearchResults();
+      setSearchStatus('');
+      applyInventoryFilter();
+      resetView();
+    });
+
+    toggle3dButtonEl.addEventListener('click', () => {
+      set3DMode(!buildingLayerEnabled, { animate: true });
+    });
+
+    locateButtonEl.addEventListener('click', () => {
+      if (!('geolocation' in navigator)) {
+        setSearchStatus('Geolokacija nije podržana u ovom pregledaču.', 'error');
+        return;
+      }
+
+      setSearchStatus('Tražim vašu lokaciju...');
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const center = [position.coords.longitude, position.coords.latitude];
+          map.flyTo({
+            center,
+            zoom: 16,
+            pitch: buildingLayerEnabled ? CITY.pitch3d : CITY.pitch2d,
+            bearing: buildingLayerEnabled ? CITY.bearing : map.getBearing(),
+            duration: 2600,
+            curve: 1.4,
+            essential: true
+          });
+          setSearchStatus('Pronađena lokacija. Mapa je pomjerena na vas.', 'success');
+        },
+        (error) => {
+          const message = error && error.code === 1
+            ? 'Pristup lokaciji je odbijen u podešavanjima pregledača.'
+            : 'Lokacija nije mogla da se odredi. Pokušajte ponovo.';
+          setSearchStatus(message, 'error');
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000
+        }
+      );
+    });
+
+    modeBadgeCloseEl.addEventListener('click', () => {
+      modeBadgeEl.remove();
+    });
+  }
+
+  async function bootstrap() {
+    setSyncStatus('Učitavam podatke...');
+    currentCollection = await loadCollection();
+    syncInventorySource();
+    updateCounters();
+    applyInventoryFilter();
+    setSyncStatus(`Učitano: ${currentCollection.features.length} stavki.`);
+  }
+
+  function showStartupOverlay(message) {
+    startupOverlayEl.hidden = false;
+    if (message) {
+      startupOverlayEl.querySelector('p').textContent = message;
+    }
+  }
+
+  function hideStartupOverlay() {
+    startupOverlayEl.hidden = true;
+  }
+
+  try {
+    map = new maplibregl.Map({
+      container: 'map',
+      style: 'https://tiles.openfreemap.org/styles/bright',
+      center: CITY.center,
+      zoom: CITY.zoom,
+      pitch: CITY.pitch3d,
+      bearing: CITY.bearing,
+      maxPitch: 85,
+      antialias: true,
+      canvasContextAttributes: { antialias: true }
+    });
+  } catch (error) {
+    console.error(error);
+    showStartupOverlay('Vaš pregledač nije mogao da pokrene WebGL, što je potrebno za 3D mapu.');
+  }
+
+  if (map) {
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
+    map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
+
+    map.on('error', (event) => {
+      const error = event && event.error;
+      console.error('Map error:', error);
+    });
+
+    map.on('load', async () => {
+      try {
+        hideStartupOverlay();
+        configureAtmosphere();
+        add3DBuildings();
+        renderLandmarks();
+        set3DMode(true, { animate: false });
+        attachEventHandlers();
+        await bootstrap();
+      } catch (error) {
+        console.error(error);
+        showStartupOverlay('Mapa je naišla na grešku pri učitavanju. Provjerite mrežu ili ponovo otvorite stranicu.');
+        setSyncStatus('Mapa nije mogla da se inicijalizuje.');
+      }
+    });
+  }
+
+  updateCounters();
+  setSyncStatus('Pripremam 3D prikaz...');
+  document.getElementById('landmark-count').textContent = String(landmarks.length);
+</script>
+</body>
+</html>
