@@ -52,7 +52,6 @@
     position: relative;
     width: 100%;
     height: 100vh;
-    height: 100dvh;
   }
 
   #map {
@@ -848,114 +847,22 @@
     .title-badge {
       top: 10px;
       left: 10px;
-      right: 64px;
+      right: auto;
       width: auto;
       padding: 8px 12px;
-      max-width: none;
     }
 
-    .title-badge__text {
-      font-size: 13px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    /* Sidebar: short peek by default, drag-handle to expand, own scroll area */
     .sidebar {
       left: 0;
       right: 0;
       bottom: 0;
-      top: auto;
       width: 100%;
       border-radius: var(--radius) var(--radius) 0 0;
-      max-height: 30vh;
-      max-height: 30dvh;
-    }
-
-    .sidebar.expanded {
-      max-height: 75vh;
-      max-height: 75dvh;
-    }
-
-    .sidebar__drag-handle {
-      display: block;
-      width: 100%;
-      height: 22px;
-      margin: 0;
-      padding: 0;
-      border: none;
-      background: transparent;
-      background-image: none;
-      position: relative;
-      flex-shrink: 0;
-      cursor: pointer;
-    }
-
-    .sidebar__drag-handle::before {
-      content: "";
-      position: absolute;
-      top: 9px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 36px;
-      height: 4px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.25);
+      max-height: 45vh;
     }
 
     .summary-grid {
       grid-template-columns: repeat(3, 1fr);
-    }
-
-    /* Control panel: collapses to a single icon button, expands on tap */
-    .control-panel {
-      top: 10px;
-      right: 10px;
-      width: 48px;
-      height: 48px;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      transition: width 0.25s ease, height 0.25s ease, padding 0.25s ease, border-radius 0.25s ease;
-    }
-
-    .control-panel.expanded {
-      width: min(320px, calc(100vw - 20px));
-      height: auto;
-      padding: 12px;
-      display: grid;
-      border-radius: var(--radius);
-    }
-
-    .control-panel-toggle {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 48px;
-      height: 48px;
-      border: none;
-      background: transparent;
-      color: var(--text);
-      font-size: 18px;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .control-panel.expanded .control-panel-toggle {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 32px;
-      height: 32px;
-    }
-
-    .control-panel:not(.expanded) .search-box,
-    .control-panel:not(.expanded) .search-status,
-    .control-panel:not(.expanded) .control-stack {
-      display: none;
     }
 
     .search-box {
@@ -979,7 +886,6 @@
   <button id="sidebar-show" class="sidebar-show" aria-label="Prikaži panel" title="Prikaži panel" style="display:none">▶</button>
 
   <aside class="sidebar" aria-label="Pregled i filteri">
-    <button type="button" class="sidebar__drag-handle" id="sidebar-drag-handle" aria-label="Proširi/skupi panel" style="display:none"></button>
     <div class="sidebar__header">
       <h1>Urban Monitor KK</h1>
       <p>
@@ -1072,7 +978,6 @@
   </aside>
 
   <section class="control-panel" aria-label="Kontrole mape">
-    <button type="button" class="control-panel-toggle" id="control-panel-toggle" aria-label="Prikaži/sakrij kontrole mape" title="Kontrole mape" style="display:none">⚙</button>
     <div class="search-box">
       <input
         id="search-input"
@@ -1972,37 +1877,6 @@
       sidebarToggleEl.setAttribute('aria-label', 'Sakrij panel');
       sidebarShowEl.style.display = 'none';
     });
-
-    /* Mobile: compact control panel that expands on tap */
-    const controlPanelEl = document.querySelector('.control-panel');
-    const controlPanelToggleEl = document.getElementById('control-panel-toggle');
-    const sidebarDragHandleEl = document.getElementById('sidebar-drag-handle');
-    const isMobile = () => window.matchMedia('(max-width: 640px)').matches;
-
-    function setupMobileLayout() {
-      if (isMobile()) {
-        controlPanelToggleEl.style.display = '';
-        sidebarDragHandleEl.style.display = '';
-        controlPanelEl.classList.remove('expanded');
-        sidebarEl.classList.remove('expanded');
-      } else {
-        controlPanelToggleEl.style.display = 'none';
-        sidebarDragHandleEl.style.display = 'none';
-        controlPanelEl.classList.remove('expanded');
-        sidebarEl.classList.remove('expanded');
-      }
-    }
-
-    controlPanelToggleEl.addEventListener('click', () => {
-      controlPanelEl.classList.toggle('expanded');
-    });
-
-    sidebarDragHandleEl.addEventListener('click', () => {
-      sidebarEl.classList.toggle('expanded');
-    });
-
-    setupMobileLayout();
-    window.addEventListener('resize', setupMobileLayout);
   }
 
   async function bootstrap() {
