@@ -47,24 +47,18 @@ Korpe koriste `bin_type` i `has_lid` umesto `material` i `has_backrest`.
 - 3D prikaz koristi OpenFreeMap stil i 3D ekstrudirane zgrade
 - Podaci se čitaju iz `/api/points`, a lokalni `points.geojson` služi kao fallback
 
-## Kako dodati ili izmeniti stavku
-
-Admin panel dostupan na `/admin` (potrebna Cloudflare KV + varijabla `ADMIN_PASSWORD`).
-
-1. Prijavite se na `/admin` sa lozinkom
-2. Dodajte, izmenite ili obrišite stavku
-3. Promene su vidljive na mapi odmah
-
-Alternativno: uredite `points.geojson` direktno ako želite da promenite
-početni fallback sadržaj.
 
 ## Doprinos
 
-Vidite klupu ili korpu koja nedostaje, pomerena je ili joj se stanje promenilo?
-Otvorite issue ili dodajte izmene kroz admin panel.
+Vidite klupu ili korpu koja nedostaje, pomjerena je ili joj se stanje promjenilo?
+Otvorite issue.
 
 ## Plan
 
 - [ ] Potpuno pokrivanje centra grada i parkova klupama i korpama
 - [ ] Javna rasveta
 - [ ] Prijave stanja od građana
+
+## Licenca
+
+Ovaj repo je javno vidljiv u demonstracijske svrhe. Kod nije otvorenog tipa (open-source) i sva prava su zadržana. Za institucionalnu upotrebu (obrazovne ustanove, Ministarstvo obrazovanja, jedinice lokalnih opština) ili partnerstva, kontakt: noniboy@zoho.com
