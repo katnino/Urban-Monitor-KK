@@ -1192,22 +1192,22 @@
     bin: {
       label: 'korpa za otpatke',
       icon: '🗑️',
-      color: '#e8b04b'
+      color: '#1e88ff'
     }
   };
 
   const conditionMeta = {
     good: {
       label: 'dobro',
-      color: '#2ecc71'
+      color: '#00c853'
     },
     fair: {
       label: 'zadovoljavajuće',
-      color: '#f1c40f'
+      color: '#ffd400'
     },
     poor: {
       label: 'loše',
-      color: '#e74c3c'
+      color: '#ff1744'
     }
   };
 
@@ -1215,7 +1215,8 @@
   const INVENTORY_LAYER_ID = 'banja-luka-inventory';
 
   /* ── Icon registration (SVG → canvas → ImageData, synchronous) ── */
-  const _COLORS = { good: '#2ecc71', fair: '#f1c40f', poor: '#e74c3c' };
+  const _CONDITION_COLORS = { good: '#00c853', fair: '#ffd400', poor: '#ff1744' };
+  const _BIN_HALO_COLOR = '#1e88ff';
   const _ICON_SIZE = 72;
 
   function _benchGlyph(condition) {
@@ -1272,10 +1273,10 @@
     `;
 
     const conditionBadge = condition === 'good'
-      ? '<path d="M47.8,20.6 l2.3,2.3 4.3,-4.8" fill="none" stroke="#15803d" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>'
+      ? '<circle cx="51" cy="21" r="3.9" fill="#00c853" stroke="#ffffff" stroke-width="1.1"/><path d="M49.3,21.2 l1.2,1.2 2.4,-2.8" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>'
       : condition === 'fair'
-        ? '<rect x="47.1" y="19.4" width="7.8" height="4.2" rx="2.1" fill="#7c5d00" opacity="0.95"/>'
-        : '<path d="M47.1,18.2 L54.5,25.6 M54.5,18.2 L47.1,25.6" fill="none" stroke="#b91c1c" stroke-width="2.1" stroke-linecap="round"/>'
+        ? '<circle cx="51" cy="21" r="3.9" fill="#ffd400" stroke="#ffffff" stroke-width="1.1"/><path d="M48.7,21 H53.3" fill="none" stroke="#1f2937" stroke-width="1.4" stroke-linecap="round"/>'
+        : '<circle cx="51" cy="21" r="3.9" fill="#ff1744" stroke="#ffffff" stroke-width="1.1"/><path d="M48.8,18.8 L53.2,23.2 M53.2,18.8 L48.8,23.2" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round"/>'
     ;
 
     return `
@@ -1315,9 +1316,9 @@
 
   async function registerInventoryIcons() {
     if (map.hasImage('bench-good')) return;
-    for (const [cond, hex] of Object.entries(_COLORS)) {
+    for (const [cond, hex] of Object.entries(_CONDITION_COLORS)) {
       const benchData = await _svgToImageData(_makeInventorySvg('bench', hex, cond));
-      const binData = await _svgToImageData(_makeInventorySvg('bin', hex));
+      const binData = await _svgToImageData(_makeInventorySvg('bin', _BIN_HALO_COLOR, cond));
       map.addImage(`bench-${cond}`, benchData);
       map.addImage(`bin-${cond}`, binData);
     }
