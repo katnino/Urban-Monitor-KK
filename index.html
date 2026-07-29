@@ -1153,32 +1153,9 @@
   };
 
   const BASEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/bright';
-
-  function createSatelliteStyle() {
-    return {
-      version: 8,
-      name: 'Satellite',
-      sources: {
-        satellite: {
-          type: 'raster',
-          tiles: [
-            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-          ],
-          tileSize: 256,
-          attribution: 'Tiles © Esri - Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
-        }
-      },
-      layers: [
-        {
-          id: 'satellite',
-          type: 'raster',
-          source: 'satellite',
-          minzoom: 0,
-          maxzoom: 22
-        }
-      ]
-    };
-  }
+  const SATELLITE_SOURCE_ID = 'satellite-overlay-source';
+  const SATELLITE_LAYER_ID = 'satellite-overlay-layer';
+  const SATELLITE_TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 
   const API_URL = '/api/points';
   const STATIC_URL = '/points.geojson';
@@ -1847,6 +1824,34 @@
     }
   }
 
+  function ensureSatelliteLayer() {
+    if (!map || !map.isStyleLoaded()) {
+      return;
+    }
+
+    if (!map.getSource(SATELLITE_SOURCE_ID)) {
+      map.addSource(SATELLITE_SOURCE_ID, {
+        type: 'raster',
+        tiles: [SATELLITE_TILE_URL],
+        tileSize: 256,
+        attribution: 'Tiles © Esri - Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+      });
+    }
+
+    if (!map.getLayer(SATELLITE_LAYER_ID)) {
+      const beforeLayerId = map.getLayer(BUILDING_LAYER_ID) ? BUILDING_LAYER_ID : undefined;
+      map.addLayer({
+        id: SATELLITE_LAYER_ID,
+        type: 'raster',
+        source: SATELLITE_SOURCE_ID,
+        layout: { visibility: 'none' },
+        paint: {
+          'raster-opacity': 1
+        }
+      }, beforeLayerId);
+    }
+  }
+
   function updateBasemapToggle() {
     const isSatellite = basemapMode === 'satellite';
     basemapToggleLabelEl.textContent = isSatellite ? 'Mapa' : 'Satelit';
@@ -1856,13 +1861,10 @@
     basemapToggleEl.title = isSatellite ? 'Prebaci na mapu' : 'Prebaci na satelit';
   }
 
-  function getBasemapStyle() {
-    return basemapMode === 'satellite' ? createSatelliteStyle() : BASEMAP_STYLE_URL;
-  }
-
   async function hydrateCurrentMapStyle() {
     configureAtmosphere();
     add3DBuildings();
+    ensureSatelliteLayer();
     await syncInventorySource();
     applyInventoryFilter();
     set3DMode(buildingLayerEnabled, { animate: false });
@@ -1875,7 +1877,10 @@
 
     basemapMode = mode;
     updateBasemapToggle();
-    map.setStyle(getBasemapStyle());
+    ensureSatelliteLayer();
+    if (map.getLayer(SATELLITE_LAYER_ID)) {
+      map.setLayoutProperty(SATELLITE_LAYER_ID, 'visibility', basemapMode === 'satellite' ? 'visible' : 'none');
+    }
   }
 
   function set3DMode(enabled, { animate = true } = {}) {
@@ -2150,7 +2155,7 @@
   try {
     map = new maplibregl.Map({
       container: 'map',
-      style: 'https://tiles.openfreemap.org/styles/bright',
+      style: BASEMAP_STYLE_URL,
       center: CITY.center,
       zoom: CITY.zoom,
       pitch: CITY.pitch3d,
@@ -2179,9 +2184,6 @@
         attachEventHandlers();
         updateBasemapToggle();
         await hydrateCurrentMapStyle();
-        map.on('style.load', () => {
-          void hydrateCurrentMapStyle();
-        });
         await bootstrap();
         /* Safety net: if inventory source still wasn't added, try again on idle */
         map.on('idle', () => {
