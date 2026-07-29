@@ -1,0 +1,27 @@
+name: Sync GeoJSON
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch live data from API
+        run: curl -s https://urban-monitor-kk.pages.dev/api/points > points.geojson
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet points.geojson; then
+            echo "No changes — nothing to commit"
+            exit 0
+          fi
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add points.geojson
+          git commit -m "sync points.geojson from live API"
+          git push
