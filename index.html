@@ -1216,56 +1216,46 @@
 
   /* ── Icon registration (SVG → canvas → ImageData, synchronous) ── */
   const _COLORS = { good: '#2ecc71', fair: '#f1c40f', poor: '#e74c3c' };
-  const _ICON_SIZE = 64;
+  const _ICON_SIZE = 72;
 
-  const _BENCH_SVG = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-      <defs>
-        <filter id="bench-shadow" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="1.6"/>
-        </filter>
-      </defs>
-      <g transform="translate(0,2)" filter="url(#bench-shadow)" opacity="0.45" fill="#000000">
-        <rect x="9"  y="11" width="6"  height="29" rx="3"/>
-        <rect x="10" y="13" width="42" height="5" rx="2.5"/>
-        <rect x="10" y="23" width="42" height="5" rx="2.5"/>
-        <rect x="6"  y="35" width="52" height="7" rx="3"/>
-        <rect x="12" y="42" width="6"  height="15" rx="2"/>
-        <rect x="46" y="42" width="6"  height="15" rx="2"/>
+  function _makeInventorySvg(kind, color) {
+    const glyph = kind === 'bench' ? `
+      <g fill="#1f2937" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round">
+        <rect x="18" y="17" width="7" height="28" rx="3.5"/>
+        <rect x="23" y="19" width="24" height="5" rx="2.5"/>
+        <rect x="23" y="28" width="24" height="5" rx="2.5"/>
+        <rect x="15" y="39" width="32" height="7" rx="3.5"/>
+        <rect x="21" y="46" width="5" height="12" rx="2.5"/>
+        <rect x="36" y="46" width="5" height="12" rx="2.5"/>
       </g>
-      <g fill="__COLOR__">
-        <rect x="9"  y="11" width="6"  height="29" rx="3"/>
-        <rect x="10" y="13" width="42" height="5" rx="2.5"/>
-        <rect x="10" y="23" width="42" height="5" rx="2.5"/>
-        <rect x="6"  y="35" width="52" height="7" rx="3"/>
-        <rect x="12" y="42" width="6"  height="15" rx="2"/>
-        <rect x="46" y="42" width="6"  height="15" rx="2"/>
+    ` : `
+      <g fill="#1f2937" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round">
+        <rect x="29" y="12" width="8" height="6" rx="2"/>
+        <rect x="18" y="18" width="24" height="6" rx="3"/>
+        <path d="M21,24 L39,24 L37,49 Q36.8,53 33,53 L27,53 Q23.2,53 23,49 Z"/>
+        <rect x="25" y="30" width="2.5" height="18" rx="1.25" opacity="0.75"/>
+        <rect x="31" y="30" width="2.5" height="18" rx="1.25" opacity="0.75"/>
       </g>
-    </svg>`;
+    `;
 
-  const _BIN_SVG = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-      <defs>
-        <filter id="bin-shadow" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="1.6"/>
-        </filter>
-      </defs>
-      <g transform="translate(0,2)" filter="url(#bin-shadow)" opacity="0.45" fill="#000000">
-        <rect x="27" y="7"  width="10" height="6" rx="2"/>
-        <rect x="14" y="14" width="36" height="7" rx="3"/>
-        <path d="M18,23 L46,23 L42.5,55 Q42.2,59 38,59 L26,59 Q21.8,59 21.5,55 Z"/>
-      </g>
-      <g fill="__COLOR__">
-        <rect x="27" y="7"  width="10" height="6" rx="2"/>
-        <rect x="14" y="14" width="36" height="7" rx="3"/>
-        <path d="M18,23 L46,23 L42.5,55 Q42.2,59 38,59 L26,59 Q21.8,59 21.5,55 Z"/>
-        <g opacity="0.45">
-          <rect x="26.5" y="27" width="3" height="26" rx="1.5" fill="#ffffff"/>
-          <rect x="32.5" y="27" width="3" height="26" rx="1.5" fill="#ffffff"/>
-          <rect x="38.5" y="27" width="3" height="26" rx="1.5" fill="#ffffff"/>
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72">
+        <defs>
+          <filter id="${kind}-shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.2"/>
+          </filter>
+        </defs>
+        <g transform="translate(0,2)" filter="url(#${kind}-shadow)" opacity="0.35">
+          <circle cx="36" cy="36" r="24" fill="#000000"/>
         </g>
-      </g>
-    </svg>`;
+        <circle cx="36" cy="36" r="25" fill="${color}"/>
+        <circle cx="36" cy="36" r="20.5" fill="#f8fafc"/>
+        <circle cx="36" cy="36" r="25" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.9"/>
+        <circle cx="36" cy="36" r="27" fill="none" stroke="#0f172a" stroke-width="2" opacity="0.85"/>
+        <circle cx="51" cy="21" r="4.5" fill="#f8fafc" stroke="${color}" stroke-width="2"/>
+        ${glyph}
+      </svg>`;
+  }
 
   function _svgToImageData(svgStr) {
     return new Promise((resolve) => {
@@ -1284,8 +1274,8 @@
   async function registerInventoryIcons() {
     if (map.hasImage('bench-good')) return;
     for (const [cond, hex] of Object.entries(_COLORS)) {
-      const benchData = await _svgToImageData(_BENCH_SVG.replaceAll('__COLOR__', hex));
-      const binData = await _svgToImageData(_BIN_SVG.replaceAll('__COLOR__', hex));
+      const benchData = await _svgToImageData(_makeInventorySvg('bench', hex));
+      const binData = await _svgToImageData(_makeInventorySvg('bin', hex));
       map.addImage(`bench-${cond}`, benchData);
       map.addImage(`bin-${cond}`, binData);
     }
@@ -1484,10 +1474,10 @@
           ],
           'icon-size': [
             'interpolate', ['linear'], ['zoom'],
-            10, 0.25,
-            14, 0.35,
-            17, 0.45,
-            20, 0.55
+            10, 0.34,
+            14, 0.48,
+            17, 0.66,
+            20, 0.82
           ],
           'icon-allow-overlap': true,
           'icon-ignore-placement': true,
