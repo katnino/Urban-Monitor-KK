@@ -1,4 +1,4 @@
-# URBAN MONITOR Klupe i korpe
+# URBAN MONITOR©️ Klupe i korpe
 
 3D mapa grada Banjaluke sa klupama, korpama za otpatke i
 prikazom važnih gradskih tačaka.
@@ -12,15 +12,14 @@ zaista stanju.
 - 🗑️ Korpe za otpatke - tip (obična/za reciklažu), poklopac, stanje
 - 💡 Javna rasvjeta - planirano
 
-Svaka stavka je ocenjena kao **dobro / zadovoljavajuće / loše** na osnovu
+Svaka stavka je ocjenjena kao **dobro / zadovoljavajuće / loše** na osnovu
 vizuelnog pregleda.
 
 ## Format podataka
 
 Primarni podaci se čuvaju u Cloudflare KV bazi pod ključem `banjaluka:points`
 i izlažu kroz `/api/points`. Ako KV nije dostupan, aplikacija pada nazad na
-lokalni `points.geojson`.
-
+lokalni `points.geojson` koji je ujedno bekap podataka.
 Jedna tačka izgleda ovako:
 
 ```json
@@ -55,8 +54,8 @@ Otvorite issue.
 
 ## Plan
 
-- [ ] Potpuno pokrivanje centra grada i parkova klupama i korpama
-- [ ] Javna rasveta
+- [ ] Potpuno pokrivanje užeg i šireg centra grada i parkova klupama i korpama
+- [ ] Javna rasvjeta
 - [ ] Prijave stanja od građana
 
 ## Licenca
