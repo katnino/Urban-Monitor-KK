@@ -1,7 +1,7 @@
 # URBAN MONITOR©️ Klupe i korpe
 
 3D mapa grada Banjaluke sa klupama, korpama za otpatke i
-prikazom važnih gradskih tačaka.
+prikazom važnijih gradskih tačaka.
 
 Cilj je jednostavan: da građani vide koja urbana oprema postoji i u kakvom je
 zaista stanju.
