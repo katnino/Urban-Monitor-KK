@@ -1218,17 +1218,50 @@
   const _COLORS = { good: '#2ecc71', fair: '#f1c40f', poor: '#e74c3c' };
   const _ICON_SIZE = 72;
 
-  function _makeInventorySvg(kind, color) {
-    const glyph = kind === 'bench' ? `
+  function _benchGlyph(condition) {
+    if (condition === 'good') {
+      return `
+        <g fill="#1f2937" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round">
+          <rect x="17" y="16" width="8" height="28" rx="3.5"/>
+          <rect x="22" y="18" width="27" height="5" rx="2.5"/>
+          <rect x="22" y="27" width="27" height="5" rx="2.5"/>
+          <rect x="14" y="38" width="34" height="7" rx="3.5"/>
+          <rect x="20" y="45" width="5" height="13" rx="2.5"/>
+          <rect x="35" y="45" width="5" height="13" rx="2.5"/>
+        </g>
+      `;
+    }
+
+    if (condition === 'fair') {
+      return `
+        <g fill="#1f2937" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round">
+          <rect x="18" y="17" width="7" height="27" rx="3.5"/>
+          <rect x="23" y="19" width="25" height="5" rx="2.5"/>
+          <rect x="23" y="29" width="16" height="5" rx="2.5"/>
+          <rect x="14" y="39" width="34" height="7" rx="3.5"/>
+          <rect x="20" y="46" width="5" height="12" rx="2.5"/>
+          <rect x="36" y="46" width="5" height="12" rx="2.5"/>
+          <rect x="30" y="34" width="10" height="2.5" rx="1.2" fill="#f8fafc" stroke="none" opacity="0.9"/>
+        </g>
+      `;
+    }
+
+    return `
       <g fill="#1f2937" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round">
-        <rect x="18" y="17" width="7" height="28" rx="3.5"/>
-        <rect x="23" y="19" width="24" height="5" rx="2.5"/>
-        <rect x="23" y="28" width="24" height="5" rx="2.5"/>
-        <rect x="15" y="39" width="32" height="7" rx="3.5"/>
-        <rect x="21" y="46" width="5" height="12" rx="2.5"/>
-        <rect x="36" y="46" width="5" height="12" rx="2.5"/>
+        <rect x="18" y="17" width="7" height="24" rx="3.5"/>
+        <rect x="24" y="19" width="24" height="5" rx="2.5"/>
+        <rect x="24" y="27" width="14" height="5" rx="2.5"/>
+        <path d="M15,40 L31,40 L29,48 L40,48 L43,57 L34,57 L32,50 L18,50 Z"/>
+        <path d="M21,46 L24,58" />
+        <path d="M35,45 L38,58" />
+        <path d="M33,31 L41,37" opacity="0.9"/>
+        <path d="M40,31 L32,37" opacity="0.9"/>
       </g>
-    ` : `
+    `;
+  }
+
+  function _makeInventorySvg(kind, color, condition = 'good') {
+    const glyph = kind === 'bench' ? _benchGlyph(condition) : `
       <g fill="#1f2937" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round">
         <rect x="29" y="12" width="8" height="6" rx="2"/>
         <rect x="18" y="18" width="24" height="6" rx="3"/>
@@ -1237,6 +1270,13 @@
         <rect x="31" y="30" width="2.5" height="18" rx="1.25" opacity="0.75"/>
       </g>
     `;
+
+    const conditionBadge = condition === 'good'
+      ? '<path d="M47,20 l2.8,2.8 5.2,-5.8" fill="none" stroke="#15803d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'
+      : condition === 'fair'
+        ? '<rect x="46.2" y="18.7" width="9.2" height="5" rx="2.5" fill="#7c5d00" opacity="0.95"/>'
+        : '<path d="M46,17.5 L55.5,27 M55.5,17.5 L46,27" fill="none" stroke="#b91c1c" stroke-width="2.4" stroke-linecap="round"/>'
+    ;
 
     return `
       <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72">
@@ -1252,7 +1292,9 @@
         <circle cx="36" cy="36" r="20.5" fill="#f8fafc"/>
         <circle cx="36" cy="36" r="25" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.9"/>
         <circle cx="36" cy="36" r="27" fill="none" stroke="#0f172a" stroke-width="2" opacity="0.85"/>
-        <circle cx="51" cy="21" r="4.5" fill="#f8fafc" stroke="${color}" stroke-width="2"/>
+        <circle cx="51" cy="21" r="4.7" fill="#f8fafc" stroke="${color}" stroke-width="2"/>
+        <circle cx="51" cy="21" r="4.7" fill="none" stroke="#0f172a" stroke-width="0.9" opacity="0.35"/>
+        ${conditionBadge}
         ${glyph}
       </svg>`;
   }
@@ -1274,7 +1316,7 @@
   async function registerInventoryIcons() {
     if (map.hasImage('bench-good')) return;
     for (const [cond, hex] of Object.entries(_COLORS)) {
-      const benchData = await _svgToImageData(_makeInventorySvg('bench', hex));
+      const benchData = await _svgToImageData(_makeInventorySvg('bench', hex, cond));
       const binData = await _svgToImageData(_makeInventorySvg('bin', hex));
       map.addImage(`bench-${cond}`, benchData);
       map.addImage(`bin-${cond}`, binData);
