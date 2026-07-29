@@ -1272,10 +1272,10 @@
     `;
 
     const conditionBadge = condition === 'good'
-      ? '<path d="M47,20 l2.8,2.8 5.2,-5.8" fill="none" stroke="#15803d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'
+      ? '<path d="M47.8,20.6 l2.3,2.3 4.3,-4.8" fill="none" stroke="#15803d" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>'
       : condition === 'fair'
-        ? '<rect x="46.2" y="18.7" width="9.2" height="5" rx="2.5" fill="#7c5d00" opacity="0.95"/>'
-        : '<path d="M46,17.5 L55.5,27 M55.5,17.5 L46,27" fill="none" stroke="#b91c1c" stroke-width="2.4" stroke-linecap="round"/>'
+        ? '<rect x="47.1" y="19.4" width="7.8" height="4.2" rx="2.1" fill="#7c5d00" opacity="0.95"/>'
+        : '<path d="M47.1,18.2 L54.5,25.6 M54.5,18.2 L47.1,25.6" fill="none" stroke="#b91c1c" stroke-width="2.1" stroke-linecap="round"/>'
     ;
 
     return `
@@ -1286,14 +1286,14 @@
           </filter>
         </defs>
         <g transform="translate(0,2)" filter="url(#${kind}-shadow)" opacity="0.35">
-          <circle cx="36" cy="36" r="24" fill="#000000"/>
+          <path d="M36 12 C47 12 56 21 56 33 C56 43 49 50 43 57 L36 64 L29 57 C23 50 16 43 16 33 C16 21 25 12 36 12 Z" fill="#000000"/>
         </g>
-        <circle cx="36" cy="36" r="25" fill="${color}"/>
-        <circle cx="36" cy="36" r="20.5" fill="#f8fafc"/>
-        <circle cx="36" cy="36" r="25" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.9"/>
-        <circle cx="36" cy="36" r="27" fill="none" stroke="#0f172a" stroke-width="2" opacity="0.85"/>
-        <circle cx="51" cy="21" r="4.7" fill="#f8fafc" stroke="${color}" stroke-width="2"/>
-        <circle cx="51" cy="21" r="4.7" fill="none" stroke="#0f172a" stroke-width="0.9" opacity="0.35"/>
+        <path d="M36 10 C47 10 56 19 56 31 C56 41 49 48 43 55 L36 64 L29 55 C23 48 16 41 16 31 C16 19 25 10 36 10 Z" fill="${color}"/>
+        <path d="M36 13 C45.6 13 53 20.7 53 31 C53 39.6 47.7 45.8 42.4 51.8 L36 58.5 L29.6 51.8 C24.3 45.8 19 39.6 19 31 C19 20.7 26.4 13 36 13 Z" fill="#f8fafc"/>
+        <path d="M36 10 C47 10 56 19 56 31 C56 41 49 48 43 55 L36 64 L29 55 C23 48 16 41 16 31 C16 19 25 10 36 10 Z" fill="none" stroke="#ffffff" stroke-width="2.4" opacity="0.9"/>
+        <path d="M36 10 C47 10 56 19 56 31 C56 41 49 48 43 55 L36 64 L29 55 C23 48 16 41 16 31 C16 19 25 10 36 10 Z" fill="none" stroke="#0f172a" stroke-width="2" opacity="0.85"/>
+        <circle cx="51" cy="21" r="3.9" fill="#f8fafc" stroke="${color}" stroke-width="1.6"/>
+        <circle cx="51" cy="21" r="3.9" fill="none" stroke="#0f172a" stroke-width="0.8" opacity="0.35"/>
         ${conditionBadge}
         ${glyph}
       </svg>`;
@@ -1516,14 +1516,14 @@
           ],
           'icon-size': [
             'interpolate', ['linear'], ['zoom'],
-            10, 0.34,
-            14, 0.48,
-            17, 0.66,
-            20, 0.82
+            10, 0.30,
+            14, 0.43,
+            17, 0.58,
+            20, 0.73
           ],
           'icon-allow-overlap': true,
           'icon-ignore-placement': true,
-          'icon-anchor': 'center'
+          'icon-anchor': 'bottom'
         }
       });
 
