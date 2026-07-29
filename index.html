@@ -148,6 +148,32 @@
     background: rgba(255,255,255,0.14);
   }
 
+  .sidebar__drag-handle {
+    display: block;
+    width: 100%;
+    height: 22px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    background-image: none;
+    position: relative;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .sidebar__drag-handle::before {
+    content: "";
+    position: absolute;
+    top: 9px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.25);
+  }
+
   .sidebar {
     position: absolute;
     top: 70px;
@@ -210,6 +236,16 @@
     color: var(--muted);
     font-size: 14px;
     line-height: 1.55;
+  }
+
+  .sidebar__actions {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .sidebar-basemap-toggle {
+    width: 100%;
   }
 
   .status-row {
@@ -878,32 +914,6 @@
       max-height: 75dvh;
     }
 
-    .sidebar__drag-handle {
-      display: block;
-      width: 100%;
-      height: 22px;
-      margin: 0;
-      padding: 0;
-      border: none;
-      background: transparent;
-      background-image: none;
-      position: relative;
-      flex-shrink: 0;
-      cursor: pointer;
-    }
-
-    .sidebar__drag-handle::before {
-      content: "";
-      position: absolute;
-      top: 9px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 36px;
-      height: 4px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.25);
-    }
-
     .summary-grid {
       grid-template-columns: repeat(3, 1fr);
     }
@@ -979,18 +989,25 @@
   <button id="sidebar-show" class="sidebar-show" aria-label="Prikaži panel" title="Prikaži panel" style="display:none">▶</button>
 
   <aside class="sidebar" aria-label="Pregled i filteri">
-    <button type="button" class="sidebar__drag-handle" id="sidebar-drag-handle" aria-label="Proširi/skupi panel" style="display:none"></button>
+  <button type="button" class="sidebar__drag-handle" id="sidebar-drag-handle" aria-label="Proširi/skupi panel"></button>
     <div class="sidebar__header">
       <h1>Urban Monitor KK</h1>
       <p>
         Inventar uličnog nameštaja — klupe i korpe za otpatke
         u centru Banje Luke.
       </p>
-      <div class="status-row">
-        <span class="status-pill">OpenFreeMap + MapLibre</span>
-        <span class="status-pill">3D zgrade i terenski podaci</span>
-      </div>
+    <div class="status-row">
+      <span class="status-pill">OpenFreeMap + MapLibre</span>
+      <span class="status-pill">3D zgrade i terenski podaci</span>
     </div>
+
+    <div class="sidebar__actions">
+      <button type="button" class="btn btn--grid sidebar-basemap-toggle" id="basemap-toggle" aria-pressed="false">
+        <span class="btn__icon" id="basemap-toggle-icon">🛰</span>
+        <span id="basemap-toggle-label">Satelit</span>
+      </button>
+    </div>
+  </div>
 
     <div class="summary-grid" aria-label="Sažetak podataka">
       <div class="summary-card">
@@ -1135,6 +1152,34 @@
     searchViewbox: [17.08, 44.84, 17.31, 44.72]
   };
 
+  const BASEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/bright';
+
+  function createSatelliteStyle() {
+    return {
+      version: 8,
+      name: 'Satellite',
+      sources: {
+        satellite: {
+          type: 'raster',
+          tiles: [
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+          ],
+          tileSize: 256,
+          attribution: 'Tiles © Esri - Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+        }
+      },
+      layers: [
+        {
+          id: 'satellite',
+          type: 'raster',
+          source: 'satellite',
+          minzoom: 0,
+          maxzoom: 22
+        }
+      ]
+    };
+  }
+
   const API_URL = '/api/points';
   const STATIC_URL = '/points.geojson';
 
@@ -1271,6 +1316,7 @@
         <rect x="31" y="30" width="2.5" height="18" rx="1.25" opacity="0.75"/>
       </g>
     `;
+    const innerFill = kind === 'bench' ? color : '#f8fafc';
 
     const conditionBadge = condition === 'good'
       ? '<circle cx="51" cy="21" r="3.9" fill="#00c853" stroke="#ffffff" stroke-width="1.1"/><path d="M49.3,21.2 l1.2,1.2 2.4,-2.8" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>'
@@ -1290,7 +1336,7 @@
           <path d="M36 12 C47 12 56 21 56 33 C56 43 49 50 43 57 L36 64 L29 57 C23 50 16 43 16 33 C16 21 25 12 36 12 Z" fill="#000000"/>
         </g>
         <path d="M36 10 C47 10 56 19 56 31 C56 41 49 48 43 55 L36 64 L29 55 C23 48 16 41 16 31 C16 19 25 10 36 10 Z" fill="${color}"/>
-        <path d="M36 13 C45.6 13 53 20.7 53 31 C53 39.6 47.7 45.8 42.4 51.8 L36 58.5 L29.6 51.8 C24.3 45.8 19 39.6 19 31 C19 20.7 26.4 13 36 13 Z" fill="#f8fafc"/>
+        <path d="M36 13 C45.6 13 53 20.7 53 31 C53 39.6 47.7 45.8 42.4 51.8 L36 58.5 L29.6 51.8 C24.3 45.8 19 39.6 19 31 C19 20.7 26.4 13 36 13 Z" fill="${innerFill}"/>
         <path d="M36 10 C47 10 56 19 56 31 C56 41 49 48 43 55 L36 64 L29 55 C23 48 16 41 16 31 C16 19 25 10 36 10 Z" fill="none" stroke="#ffffff" stroke-width="2.4" opacity="0.9"/>
         <path d="M36 10 C47 10 56 19 56 31 C56 41 49 48 43 55 L36 64 L29 55 C23 48 16 41 16 31 C16 19 25 10 36 10 Z" fill="none" stroke="#0f172a" stroke-width="2" opacity="0.85"/>
         <circle cx="51" cy="21" r="3.9" fill="#f8fafc" stroke="${color}" stroke-width="1.6"/>
@@ -1337,6 +1383,9 @@
   const toggle3dButtonEl = document.getElementById('toggle-3d-button');
   const toggle3dLabelEl = document.getElementById('toggle-3d-label');
   const toggle3dIconEl = document.getElementById('toggle-3d-icon');
+  const basemapToggleEl = document.getElementById('basemap-toggle');
+  const basemapToggleLabelEl = document.getElementById('basemap-toggle-label');
+  const basemapToggleIconEl = document.getElementById('basemap-toggle-icon');
   const locateButtonEl = document.getElementById('locate-button');
   const modeBadgeEl = document.getElementById('mode-badge');
   const modeBadgeCloseEl = document.getElementById('mode-badge-close');
@@ -1345,6 +1394,7 @@
   let map;
   let currentCollection = emptyCollection();
   let buildingLayerEnabled = true;
+  let basemapMode = 'map';
   let activeLandmarkId = '';
   let landmarkMarkers = new Map();
   let inventorySourceReady = false;
@@ -1797,6 +1847,37 @@
     }
   }
 
+  function updateBasemapToggle() {
+    const isSatellite = basemapMode === 'satellite';
+    basemapToggleLabelEl.textContent = isSatellite ? 'Mapa' : 'Satelit';
+    basemapToggleIconEl.textContent = isSatellite ? '🗺' : '🛰';
+    basemapToggleEl.setAttribute('aria-pressed', String(isSatellite));
+    basemapToggleEl.setAttribute('aria-label', isSatellite ? 'Prebaci na mapu' : 'Prebaci na satelit');
+    basemapToggleEl.title = isSatellite ? 'Prebaci na mapu' : 'Prebaci na satelit';
+  }
+
+  function getBasemapStyle() {
+    return basemapMode === 'satellite' ? createSatelliteStyle() : BASEMAP_STYLE_URL;
+  }
+
+  async function hydrateCurrentMapStyle() {
+    configureAtmosphere();
+    add3DBuildings();
+    await syncInventorySource();
+    applyInventoryFilter();
+    set3DMode(buildingLayerEnabled, { animate: false });
+  }
+
+  function setBasemapMode(mode) {
+    if (mode === basemapMode) {
+      return;
+    }
+
+    basemapMode = mode;
+    updateBasemapToggle();
+    map.setStyle(getBasemapStyle());
+  }
+
   function set3DMode(enabled, { animate = true } = {}) {
     buildingLayerEnabled = enabled;
 
@@ -1990,37 +2071,36 @@
     const sidebarEl = document.querySelector('.sidebar');
     const sidebarToggleEl = document.getElementById('sidebar-toggle');
     const sidebarShowEl = document.getElementById('sidebar-show');
+    const sidebarDragHandleEl = document.getElementById('sidebar-drag-handle');
     const toggleIcon = sidebarToggleEl.querySelector('.sidebar-toggle__icon');
+    const isMobile = () => window.matchMedia('(max-width: 640px)').matches;
+
+    function setSidebarCollapsed(collapsed) {
+      sidebarEl.classList.toggle('collapsed', collapsed);
+      toggleIcon.textContent = collapsed ? '▶' : '◀';
+      sidebarToggleEl.setAttribute('aria-label', collapsed ? 'Prikaži panel' : 'Sakrij panel');
+      sidebarToggleEl.title = collapsed ? 'Prikaži panel' : 'Sakrij panel';
+      sidebarShowEl.style.display = collapsed ? '' : 'none';
+    }
 
     sidebarToggleEl.addEventListener('click', () => {
-      sidebarEl.classList.add('collapsed');
-      toggleIcon.textContent = '▶';
-      sidebarToggleEl.setAttribute('aria-label', 'Prikaži panel');
-      sidebarShowEl.style.display = '';
+      setSidebarCollapsed(true);
     });
 
     sidebarShowEl.addEventListener('click', () => {
-      sidebarEl.classList.remove('collapsed');
-      toggleIcon.textContent = '◀';
-      sidebarToggleEl.setAttribute('aria-label', 'Sakrij panel');
-      sidebarShowEl.style.display = 'none';
+      setSidebarCollapsed(false);
     });
 
-    /* Mobile: compact control panel that expands on tap */
     const controlPanelEl = document.querySelector('.control-panel');
     const controlPanelToggleEl = document.getElementById('control-panel-toggle');
-    const sidebarDragHandleEl = document.getElementById('sidebar-drag-handle');
-    const isMobile = () => window.matchMedia('(max-width: 640px)').matches;
 
     function setupMobileLayout() {
       if (isMobile()) {
         controlPanelToggleEl.style.display = '';
-        sidebarDragHandleEl.style.display = '';
         controlPanelEl.classList.remove('expanded');
         sidebarEl.classList.remove('expanded');
       } else {
         controlPanelToggleEl.style.display = 'none';
-        sidebarDragHandleEl.style.display = 'none';
         controlPanelEl.classList.remove('expanded');
         sidebarEl.classList.remove('expanded');
       }
@@ -2031,10 +2111,19 @@
     });
 
     sidebarDragHandleEl.addEventListener('click', () => {
-      sidebarEl.classList.toggle('expanded');
+      if (isMobile()) {
+        sidebarEl.classList.toggle('expanded');
+      } else {
+        setSidebarCollapsed(!sidebarEl.classList.contains('collapsed'));
+      }
+    });
+
+    basemapToggleEl.addEventListener('click', () => {
+      setBasemapMode(basemapMode === 'map' ? 'satellite' : 'map');
     });
 
     setupMobileLayout();
+    updateBasemapToggle();
     window.addEventListener('resize', setupMobileLayout);
   }
 
@@ -2086,11 +2175,13 @@
     map.on('load', async () => {
       try {
         hideStartupOverlay();
-        configureAtmosphere();
-        add3DBuildings();
         renderLandmarks();
-        set3DMode(true, { animate: false });
         attachEventHandlers();
+        updateBasemapToggle();
+        await hydrateCurrentMapStyle();
+        map.on('style.load', () => {
+          void hydrateCurrentMapStyle();
+        });
         await bootstrap();
         /* Safety net: if inventory source still wasn't added, try again on idle */
         map.on('idle', () => {
