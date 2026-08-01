@@ -609,24 +609,11 @@
     color: #c7f3df;
   }
 
-  .sync-toast {
-    position: absolute;
-    top: 16px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 35;
-    max-width: min(620px, calc(100vw - 32px));
-    padding: 10px 15px;
-    border-radius: 999px;
-    background: rgba(9, 14, 22, 0.82);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: var(--shadow);
+  .sidebar__sync-status {
+    margin: 0 0 10px;
     color: var(--muted-strong);
-    font-size: 13px;
-    line-height: 1.4;
-    text-align: center;
-    backdrop-filter: blur(14px) saturate(130%);
-    -webkit-backdrop-filter: blur(14px) saturate(130%);
+    font-size: 12px;
+    line-height: 1.5;
   }
 
   .mode-badge {
@@ -1106,6 +1093,7 @@
     </div>
 
     <div class="sidebar__footer">
+      <div id="sync-status" class="sidebar__sync-status" aria-live="polite">Učitavanje podataka...</div>
       Podaci se čuvaju u Cloudflare KV bazi.
       Za dodavanje ili izmenu stavki koristite <a href="/admin" style="color:var(--accent);text-decoration:none">admin panel</a>.
     </div>
@@ -1141,8 +1129,6 @@
       </button>
     </div>
   </section>
-
-  <div class="sync-toast" id="sync-status" aria-live="polite">Učitavanje podataka...</div>
 
   <div class="mode-badge" id="mode-badge" role="note">
     <span class="mode-badge__text">Free OSM režim sa OpenFreeMap stilom. Dodajte token samo ako želite druge izvore.</span>
