@@ -2157,14 +2157,22 @@
 
     const controlPanelEl = document.querySelector('.control-panel');
     const controlPanelToggleEl = document.getElementById('control-panel-toggle');
+    let prevMobileState = null;
 
     function setupMobileLayout() {
-      if (isMobile()) {
+      const mobile = isMobile();
+      const changed = prevMobileState === null || prevMobileState !== mobile;
+      prevMobileState = mobile;
+
+      if (mobile) {
         controlPanelToggleEl.style.display = '';
-        controlPanelEl.classList.remove('expanded');
-        sidebarEl.classList.remove('expanded');
+        sidebarDragHandleEl.style.display = '';
       } else {
         controlPanelToggleEl.style.display = 'none';
+        sidebarDragHandleEl.style.display = 'none';
+      }
+
+      if (changed) {
         controlPanelEl.classList.remove('expanded');
         sidebarEl.classList.remove('expanded');
       }
