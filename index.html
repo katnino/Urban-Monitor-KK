@@ -699,6 +699,41 @@
     }
   }
 
+  .user-location-marker {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+
+  .user-location-marker__pulse {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(30, 136, 255, 0.35);
+    animation: user-location-pulse 2.2s ease-out infinite;
+  }
+
+  .user-location-marker__dot {
+    position: absolute;
+    inset: 2px;
+    border-radius: 50%;
+    background: #1e88ff;
+    border: 2.5px solid #ffffff;
+    box-shadow: 0 0 6px rgba(30, 136, 255, 0.6);
+  }
+
+  @keyframes user-location-pulse {
+    0% {
+      transform: scale(0.7);
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(2.3);
+      opacity: 0;
+    }
+  }
+
   .popup-card h3 {
     margin: 0 0 6px;
     font-size: 15px;
@@ -943,6 +978,7 @@
     }
 
     .control-panel.expanded {
+      top: 62px;
       width: min(320px, calc(100vw - 20px));
       height: auto;
       padding: 12px;
@@ -1380,6 +1416,7 @@
   let activeLandmarkId = '';
   let landmarkMarkers = new Map();
   let inventorySourceReady = false;
+  let userMarker = null;
 
   function emptyCollection() {
     return {
@@ -1716,6 +1753,22 @@
     });
 
     landmarkListEl.appendChild(fragment);
+  }
+
+  function showUserLocation(center) {
+    if (!userMarker) {
+      const element = document.createElement('div');
+      element.className = 'user-location-marker';
+      element.innerHTML = '<span class="user-location-marker__pulse"></span><span class="user-location-marker__dot"></span>';
+      userMarker = new maplibregl.Marker({
+        element,
+        anchor: 'center'
+      })
+        .setLngLat(center)
+        .addTo(map);
+    } else {
+      userMarker.setLngLat(center);
+    }
   }
 
   async function loadCollection() {
@@ -2058,6 +2111,7 @@
             curve: 1.4,
             essential: true
           });
+          showUserLocation(center);
           setSearchStatus('Pronađena lokacija. Mapa je pomjerena na vas.', 'success');
         },
         (error) => {
