@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%8F%99%EF%B8%8F%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Great+Vibes&family=Smooch+Sans:wght@400;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <style>
   :root {
@@ -84,13 +84,18 @@
   }
 
   .title-badge__text {
-    font-size: 15px;
+    font-family: "Smooch Sans", "Space Grotesk", sans-serif;
+    font-size: 17px;
     font-weight: 700;
     letter-spacing: 0.02em;
   }
 
   .title-badge__text em {
     font-style: normal;
+    font-family: "Great Vibes", cursive;
+    font-weight: 400;
+    font-size: 19px;
+    letter-spacing: 0;
     color: var(--accent);
   }
 
@@ -225,10 +230,20 @@
 
   .sidebar__header h1 {
     margin: 0;
-    font-family: "Fraunces", Georgia, serif;
-    font-size: 30px;
-    line-height: 1.03;
-    letter-spacing: -0.04em;
+    font-family: "Smooch Sans", "Space Grotesk", sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .sidebar__header h1 .brand-sub {
+    display: block;
+    margin-top: 4px;
+    font-family: "Great Vibes", cursive;
+    font-weight: 400;
+    font-size: 36px;
+    line-height: 1;
+    color: var(--accent);
   }
 
   .sidebar__header p {
@@ -853,7 +868,11 @@
     }
 
     .sidebar__header h1 {
-      font-size: 22px;
+      font-size: 24px;
+    }
+
+    .sidebar__header h1 .brand-sub {
+      font-size: 26px;
     }
 
     .sidebar__header p {
@@ -895,6 +914,10 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .title-badge__text em {
+      font-size: 16px;
     }
 
     /* Sidebar: short peek by default, drag-handle to expand, own scroll area */
@@ -980,7 +1003,7 @@
 
   <div class="title-badge" aria-label="Naslov aplikacije">
     <span class="title-badge__icon">🏙️</span>
-    <span class="title-badge__text"><em>Urban</em> Monitor KK</span>
+    <span class="title-badge__text">Urban Monitor <em>KK</em></span>
     <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Sakrij panel" title="Sakrij/prikaži panel">
       <span class="sidebar-toggle__icon">◀</span>
     </button>
@@ -991,7 +1014,7 @@
   <aside class="sidebar" aria-label="Pregled i filteri">
   <button type="button" class="sidebar__drag-handle" id="sidebar-drag-handle" aria-label="Proširi/skupi panel"></button>
     <div class="sidebar__header">
-      <h1>Urban Monitor KK</h1>
+      <h1>Urban Monitor <span class="brand-sub">Klupe i korpe</span></h1>
       <p>
         Inventar uličnog nameštaja — klupe i korpe za otpatke
         u centru Banje Luke.
